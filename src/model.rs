@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use spec::*;
 
 #[derive(Debug)]
@@ -40,6 +40,7 @@ pub struct EcsModel {
     pub common: Vec<CommonComponentModel>,
     pub data: BTreeMap<u64, DataComponentModel>,
     pub cells: BTreeMap<u64, CellComponentModel>,
+    pub flags: BTreeSet<u64>,
 }
 
 impl EcsModel {
@@ -48,6 +49,7 @@ impl EcsModel {
             common: Vec::new(),
             data: BTreeMap::new(),
             cells: BTreeMap::new(),
+            flags: BTreeSet::new(),
         }
     }
     pub fn num_components(&self) -> usize { self.common.len() }
@@ -85,6 +87,7 @@ impl<'a> From<&'a EcsSpec> for EcsModel {
 
         for f in spec.flags.iter() {
             model.common.push(CommonComponentModel::new(f.name.clone(), id));
+            model.flags.insert(id);
             id += 1;
         }
 

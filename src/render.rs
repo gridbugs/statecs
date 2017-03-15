@@ -74,6 +74,36 @@ impl TemplateData {
                 bitfield_idx: c.bitfield_idx,
                 uppercase_name: c.uppercase_name(),
             });
+            if let Some(data_component) = model.data.get(&c.id) {
+                data.data_components.push(DataComponentTemplateData {
+                    name: c.name.clone(),
+                    id: c.id,
+                    bitfield_bit: c.bitfield_bit,
+                    bitfield_idx: c.bitfield_idx,
+                    uppercase_name: c.uppercase_name(),
+                    type_name: data_component.type_name.clone(),
+                    copy: data_component.copy,
+                });
+            }
+            if let Some(cell_component) = model.cells.get(&c.id) {
+                data.cell_components.push(CellComponentTemplateData {
+                    name: c.name.clone(),
+                    id: c.id,
+                    bitfield_bit: c.bitfield_bit,
+                    bitfield_idx: c.bitfield_idx,
+                    uppercase_name: c.uppercase_name(),
+                    type_name: cell_component.type_name.clone(),
+                });
+            }
+            if model.flags.contains(&c.id) {
+                data.flag_components.push(FlagComponentTemplateData {
+                    name: c.name.clone(),
+                    id: c.id,
+                    bitfield_bit: c.bitfield_bit,
+                    bitfield_idx: c.bitfield_idx,
+                    uppercase_name: c.uppercase_name(),
+                });
+            }
         }
 
         data
