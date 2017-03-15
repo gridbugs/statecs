@@ -80,10 +80,14 @@ impl TemplateData {
     }
 }
 
+pub fn full_template() -> String {
+    templates::HEADER.to_string() +
+        templates::COMPONENT_SET +
+        templates::ENTITY_SET +
+        templates::ENTITY_MAP
+}
+
 pub fn render(model: &EcsModel, config: Config) -> String {
-    let full_template =
-        templates::HEADER.to_string() +
-        templates::COMPONENT_SET;
 
     let data = TemplateData::new(model, config);
 
@@ -91,6 +95,6 @@ pub fn render(model: &EcsModel, config: Config) -> String {
 
     // prevent xml escaping
     handlebars.register_escape_fn(|input| input.to_string());
-    handlebars.template_render(&full_template, &data)
+    handlebars.template_render(&full_template(), &data)
         .expect("Failed to render template")
 }
