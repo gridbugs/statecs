@@ -20,6 +20,7 @@ struct DataComponentTemplateData {
     pub bitfield_bit: u64,
     pub bitfield_idx: usize,
     pub uppercase_name: String,
+    #[serde(rename = "type")]
     pub type_name: String,
     pub copy: bool,
 }
@@ -31,6 +32,7 @@ struct CellComponentTemplateData {
     pub bitfield_bit: u64,
     pub bitfield_idx: usize,
     pub uppercase_name: String,
+    #[serde(rename = "type")]
     pub type_name: String,
 }
 
