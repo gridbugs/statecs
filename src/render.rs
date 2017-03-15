@@ -50,6 +50,7 @@ struct TemplateData {
     pub num_components: usize,
     pub component_bitfield_size: usize,
     pub single_component_bitfield: bool,
+    pub combine_flag_set: bool,
     pub components: Vec<ComponentTemplateData>,
     pub data_components: Vec<DataComponentTemplateData>,
     pub cell_components: Vec<CellComponentTemplateData>,
@@ -62,6 +63,7 @@ impl TemplateData {
             num_components: model.num_components(),
             component_bitfield_size: model.bitfield_size(),
             single_component_bitfield: config.single_component_bitfield && model.bitfield_size() == 1,
+            combine_flag_set: config.combine_flag_set,
             components: Vec::new(),
             data_components: Vec::new(),
             cell_components: Vec::new(),
@@ -116,7 +118,8 @@ pub fn full_template() -> String {
     templates::HEADER.to_string() +
         templates::COMPONENT_SET +
         templates::ENTITY_SET +
-        templates::ENTITY_MAP
+        templates::ENTITY_MAP +
+        templates::ECS_CTX
 }
 
 pub fn render(model: &EcsModel, config: Config) -> String {
