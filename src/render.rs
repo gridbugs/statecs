@@ -83,8 +83,7 @@ impl TemplateData {
 pub fn render(model: &EcsModel, config: Config) -> String {
     let full_template =
         templates::HEADER.to_string() +
-        templates::COMPONENT_SET +
-        templates::ECS_CTX;
+        templates::COMPONENT_SET;
 
     let data = TemplateData::new(model, config);
 
