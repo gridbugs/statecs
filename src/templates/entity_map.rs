@@ -1,4 +1,5 @@
 pub const ENTITY_MAP: &'static str = r#"
+#[derive(Clone)]
 pub struct EntityMap<T> {
     inner: BTreeMap<EntityId, T>,
 }
