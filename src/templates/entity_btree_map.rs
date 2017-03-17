@@ -1,12 +1,12 @@
-pub const ENTITY_MAP: &'static str = r#"
+pub const ENTITY_BTREE_MAP: &'static str = r#"
 #[derive(Clone)]
-pub struct EntityMap<T> {
+pub struct EntityBTreeMap<T> {
     inner: BTreeMap<EntityId, T>,
 }
 
-impl<T> EntityMap<T> {
+impl<T> EntityBTreeMap<T> {
     pub fn new() -> Self {
-        EntityMap {
+        EntityBTreeMap {
             inner: BTreeMap::new(),
         }
     }
@@ -43,72 +43,76 @@ impl<T> EntityMap<T> {
         self.inner.entry(entity)
     }
 
-    pub fn iter(&self) -> EntityMapIter<T> {
-        EntityMapIter::new(self.inner.iter())
+    pub fn iter(&self) -> EntityBTreeMapIter<T> {
+        EntityBTreeMapIter::new(self.inner.iter())
     }
 
-    pub fn keys(&self) -> EntityMapKeys<T> {
-        EntityMapKeys::new(self.inner.keys())
+    pub fn keys(&self) -> EntityBTreeMapKeys<T> {
+        EntityBTreeMapKeys::new(self.inner.keys())
     }
-}
 
-impl<T: Copy> EntityMap<T> {
-    pub fn copy_iter(&self) -> EntityMapCopyIter<T> {
-        EntityMapCopyIter::new(self.inner.iter())
+    pub fn append(&mut self, other: &mut EntityBTreeMap<T>) {
+        self.inner.append(&mut other.inner)
     }
 }
 
-pub struct EntityMapKeys<'a, T: 'a> {
+impl<T: Copy> EntityBTreeMap<T> {
+    pub fn copy_iter(&self) -> EntityBTreeMapCopyIter<T> {
+        EntityBTreeMapCopyIter::new(self.inner.iter())
+    }
+}
+
+pub struct EntityBTreeMapKeys<'a, T: 'a> {
     keys: btree_map::Keys<'a, EntityId, T>,
 }
 
-impl<'a, T: 'a> EntityMapKeys<'a, T> {
+impl<'a, T: 'a> EntityBTreeMapKeys<'a, T> {
     fn new(keys: btree_map::Keys<'a, EntityId, T>) -> Self {
-        EntityMapKeys {
+        EntityBTreeMapKeys {
             keys: keys,
         }
     }
 }
 
-impl<'a, T: 'a> Iterator for EntityMapKeys<'a, T> {
+impl<'a, T: 'a> Iterator for EntityBTreeMapKeys<'a, T> {
     type Item = EntityId;
     fn next(&mut self) -> Option<Self::Item> {
         self.keys.next().map(|id_ref| *id_ref)
     }
 }
 
-pub struct EntityMapIter<'a, T: 'a> {
+pub struct EntityBTreeMapIter<'a, T: 'a> {
     iter: btree_map::Iter<'a, EntityId, T>,
 }
 
-impl<'a, T: 'a> EntityMapIter<'a, T> {
+impl<'a, T: 'a> EntityBTreeMapIter<'a, T> {
     fn new(iter: btree_map::Iter<'a, EntityId, T>) -> Self {
-        EntityMapIter {
+        EntityBTreeMapIter {
             iter: iter,
         }
     }
 }
 
-impl<'a, T: 'a> Iterator for EntityMapIter<'a, T> {
+impl<'a, T: 'a> Iterator for EntityBTreeMapIter<'a, T> {
     type Item = (EntityId, &'a T);
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|(id_ref, v)| (*id_ref, v))
     }
 }
 
-pub struct EntityMapCopyIter<'a, T: 'a + Copy> {
+pub struct EntityBTreeMapCopyIter<'a, T: 'a + Copy> {
     iter: btree_map::Iter<'a, EntityId, T>,
 }
 
-impl<'a, T: 'a + Copy> EntityMapCopyIter<'a, T> {
+impl<'a, T: 'a + Copy> EntityBTreeMapCopyIter<'a, T> {
     fn new(iter: btree_map::Iter<'a, EntityId, T>) -> Self {
-        EntityMapCopyIter {
+        EntityBTreeMapCopyIter {
             iter: iter,
         }
     }
 }
 
-impl<'a, T: 'a + Copy> Iterator for EntityMapCopyIter<'a, T> {
+impl<'a, T: 'a + Copy> Iterator for EntityBTreeMapCopyIter<'a, T> {
     type Item = (EntityId, T);
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|(id_ref, v)| (*id_ref, *v))

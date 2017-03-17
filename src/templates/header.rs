@@ -4,7 +4,9 @@ pub const HEADER: &'static str = r#"// Automatically generated. Do not edit.
 
 use std::collections::{BTreeSet, btree_set};
 use std::collections::{BTreeMap, btree_map};
-use std::cell::RefCell;
+use std::collections::Bound;
+use std::cell::{Ref, RefMut, RefCell};
+use std::iter::Map;
 
 const NUM_COMPONENTS: usize = {{num_components}};
 
