@@ -7,7 +7,7 @@ use std::collections::{BTreeMap, btree_map};
 use std::collections::Bound;
 use std::collections::range::RangeArgument;
 use std::cell::{Ref, RefMut, RefCell};
-use std::iter::Map;
+use std::slice;
 
 const NUM_COMPONENTS: usize = {{num_components}};
 

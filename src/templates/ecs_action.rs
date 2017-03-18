@@ -35,7 +35,18 @@ impl EcsActionDeletions {
         self.apply_{{name}}.push(id);
         self.lookup_{{name}}.insert(id)
     }
+    fn iter_{{name}}(&self) -> DeletionIdIter {
+        DeletionIdIter(self.apply_{{name}}.iter())
+    }
 {{/each}}
+}
+
+pub struct DeletionIdIter<'a>(slice::Iter<'a, EntityId>);
+impl<'a> Iterator for DeletionIdIter<'a> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|r| *r)
+    }
 }
 
 struct EcsActionSwaps {
@@ -81,6 +92,231 @@ impl EcsActionSwaps {
         self._empty = false;
     }
 {{/each}}
+{{#each data_components}}
+    fn inner_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapIter<'a, 'b, {{type}}> {
+        SwapIter {
+            iter: self.lookup_{{name}}.iter(),
+            data: &ecs.{{name}},
+        }
+    }
+    fn positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIter<'a, 'b, {{type}}> {
+        SwapPositiveIter(self.inner_iter_{{name}}(ecs))
+    }
+    {{#if copy}}
+    fn positive_copy_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveCopyIter<'a, 'b, {{type}}> {
+        SwapPositiveCopyIter(self.positive_iter_{{name}}(ecs))
+    }
+    {{/if}}
+    fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIdIter<'a, 'b, {{type}}> {
+        SwapPositiveIdIter(self.inner_iter_{{name}}(ecs))
+    }
+    fn negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeIdIter<'a, 'b, {{type}}> {
+        SwapNegativeIdIter(self.inner_iter_{{name}}(ecs))
+    }
+{{/each}}
+{{#each cell_components}}
+    fn inner_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapIter<'a, 'b, RefCell<{{type}}>> {
+        SwapIter {
+            iter: self.lookup_{{name}}.iter(),
+            data: &ecs.{{name}},
+        }
+    }
+    fn positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIter<'a, 'b, RefCell<{{type}}>> {
+        SwapPositiveIter(self.inner_iter_{{name}}(ecs))
+    }
+    fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIdIter<'a, 'b, RefCell<{{type}}>> {
+        SwapPositiveIdIter(self.inner_iter_{{name}}(ecs))
+    }
+    fn negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeIdIter<'a, 'b, RefCell<{{type}}>> {
+        SwapNegativeIdIter(self.inner_iter_{{name}}(ecs))
+    }
+{{/each}}
+{{#each flag_components}}
+    fn inner_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapFlagIdIter<'a, 'b> {
+        SwapFlagIdIter {
+            iter: self.lookup_{{name}}.iter(),
+    {{#if ../combine_flag_set}}
+            data: &ecs._flags,
+            mask: {{mask}},
+    {{else}}
+            data: &ecs.{{name}},
+    {{/if}}
+        }
+    }
+    fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveFlagIdIter<'a, 'b> {
+        SwapPositiveFlagIdIter(self.inner_id_iter_{{name}}(ecs))
+    }
+    fn negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeFlagIdIter<'a, 'b> {
+        SwapNegativeFlagIdIter(self.inner_id_iter_{{name}}(ecs))
+    }
+{{/each}}
+}
+
+struct SwapFlagIdIter<'a, 'b> {
+    iter: EntityBTreeMapIter<'a, EntityId>,
+    data: &'b EntityBTreeSet,
+{{#if combine_flag_set}}
+    mask: u64,
+{{/if}}
+}
+
+pub struct SwapPositiveFlagIdIter<'a, 'b>(SwapFlagIdIter<'a, 'b>);
+impl<'a, 'b> Iterator for SwapPositiveFlagIdIter<'a, 'b> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some((id, source)) = self.0.iter.next() {
+            {{#if combine_flag_set}}
+            let key = *source | self.0.mask;
+            {{else}}
+            let key = *source;
+            {{/if}}
+            if self.0.data.contains(key) {
+                return Some(id);
+            }
+        }
+
+        None
+    }
+}
+
+pub struct SwapNegativeFlagIdIter<'a, 'b>(SwapFlagIdIter<'a, 'b>);
+impl<'a, 'b> Iterator for SwapNegativeFlagIdIter<'a, 'b> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some((id, source)) = self.0.iter.next() {
+            {{#if combine_flag_set}}
+            let key = *source | self.0.mask;
+            {{else}}
+            let key = *source;
+            {{/if}}
+            if !self.0.data.contains(key) {
+                return Some(id);
+            }
+        }
+
+        None
+    }
+}
+
+struct SwapIter<'a, 'b, T: 'b> {
+    iter: EntityBTreeMapIter<'a, EntityId>,
+    data: &'b EntityBTreeMap<T>,
+}
+
+pub struct SwapPositiveIter<'a, 'b, T: 'b>(SwapIter<'a, 'b, T>);
+impl<'a, 'b, T: 'b> Iterator for SwapPositiveIter<'a, 'b, T> {
+    type Item = (EntityId, &'b T);
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some((id, source)) = self.0.iter.next() {
+            if let Some(data) = self.0.data.get(*source) {
+                return Some((id, data));
+            }
+        }
+
+        None
+    }
+}
+
+pub struct SwapPositiveCopyIter<'a, 'b, T: 'b + Copy>(SwapPositiveIter<'a, 'b, T>);
+impl<'a, 'b, T: 'b + Copy> Iterator for SwapPositiveCopyIter<'a, 'b, T> {
+    type Item = (EntityId, T);
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(id, data)| (id, *data))
+    }
+}
+
+pub struct SwapPositiveIdIter<'a, 'b, T: 'b>(SwapIter<'a, 'b, T>);
+impl<'a, 'b, T: 'b> Iterator for SwapPositiveIdIter<'a, 'b, T> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some((id, source)) = self.0.iter.next() {
+            if self.0.data.contains_key(*source) {
+                return Some(id);
+            }
+        }
+
+        None
+    }
+}
+
+pub struct SwapNegativeIdIter<'a, 'b, T: 'b>(SwapIter<'a, 'b, T>);
+impl<'a, 'b, T: 'b> Iterator for SwapNegativeIdIter<'a, 'b, T> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some((id, source)) = self.0.iter.next() {
+            if !self.0.data.contains_key(*source) {
+                return Some(id);
+            }
+        }
+
+        None
+    }
+}
+
+pub struct PositiveIter<'a: 'b, 'b, T: 'a + 'b> {
+    insertions: EntityBTreeMapIter<'a, T>,
+    swaps: SwapPositiveIter<'a, 'b, T>,
+}
+impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIter<'a, 'b, T> {
+    type Item = (EntityId, &'b T);
+    fn next(&mut self) -> Option<Self::Item> {
+        self.insertions.next().or_else(|| self.swaps.next())
+    }
+}
+
+pub struct PositiveIdIter<'a: 'b, 'b, T: 'a + 'b> {
+    insertions: EntityBTreeMapKeys<'a, T>,
+    swaps: SwapPositiveIdIter<'a, 'b, T>,
+}
+impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIdIter<'a, 'b, T> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.insertions.next().or_else(|| self.swaps.next())
+    }
+}
+
+pub struct PositiveCopyIter<'a: 'b, 'b, T: 'a + 'b + Copy> {
+    insertions: EntityBTreeMapCopyIter<'a, T>,
+    swaps: SwapPositiveCopyIter<'a, 'b, T>,
+}
+impl<'a: 'b, 'b, T: 'a + 'b + Copy> Iterator for PositiveCopyIter<'a, 'b, T> {
+    type Item = (EntityId, T);
+    fn next(&mut self) -> Option<Self::Item> {
+        self.insertions.next().or_else(|| self.swaps.next())
+    }
+}
+
+pub struct PositiveFlagIdIter<'a: 'b, 'b> {
+    insertions: FlagIdIter<'a>,
+    swaps: SwapPositiveFlagIdIter<'a, 'b>,
+}
+impl<'a: 'b, 'b> Iterator for PositiveFlagIdIter<'a, 'b> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.insertions.next().or_else(|| self.swaps.next())
+    }
+}
+
+pub struct NegativeIdIter<'a: 'b, 'b, T: 'a + 'b> {
+    deletions: DeletionIdIter<'a>,
+    swaps: SwapNegativeIdIter<'a, 'b, T>,
+}
+impl<'a: 'b, 'b, T: 'a + 'b> Iterator for NegativeIdIter<'a, 'b, T> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.deletions.next().or_else(|| self.swaps.next())
+    }
+}
+
+pub struct NegativeFlagIdIter<'a: 'b, 'b> {
+    deletions: DeletionIdIter<'a>,
+    swaps: SwapNegativeFlagIdIter<'a, 'b>,
+}
+impl<'a: 'b, 'b> Iterator for NegativeFlagIdIter<'a, 'b> {
+    type Item = EntityId;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.deletions.next().or_else(|| self.swaps.next())
+    }
 }
 
 pub struct EcsAction {
@@ -129,6 +365,9 @@ impl EcsAction {
     pub fn swap_{{name}}(&mut self, id_a: EntityId, id_b: EntityId) {
         self.swaps.swap_{{name}}(id_a, id_b);
     }
+    pub fn deletion_iter_{{name}}(&self) -> DeletionIdIter {
+        self.deletions.iter_{{name}}()
+    }
 {{/each}}
 
 {{#each data_components}}
@@ -143,6 +382,49 @@ impl EcsAction {
         self.insertions.copy_iter_{{name}}()
     }
     {{/if}}
+    pub fn swap_positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIter<'a, 'b, {{type}}> {
+        self.swaps.positive_iter_{{name}}(ecs)
+    }
+    pub fn swap_positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIdIter<'a, 'b, {{type}}> {
+        self.swaps.positive_id_iter_{{name}}(ecs)
+    }
+    {{#if copy}}
+    pub fn swap_positive_copy_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveCopyIter<'a, 'b, {{type}}> {
+        self.swaps.positive_copy_iter_{{name}}(ecs)
+    }
+    {{/if}}
+    pub fn swap_negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeIdIter<'a, 'b, {{type}}> {
+        self.swaps.negative_id_iter_{{name}}(ecs)
+    }
+    pub fn positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveIter<'a, 'b, {{type}}> {
+        PositiveIter {
+            insertions: self.iter_{{name}}(),
+            swaps: self.swap_positive_iter_{{name}}(ecs),
+        }
+    }
+    pub fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveIdIter<'a, 'b, {{type}}> {
+        PositiveIdIter {
+            insertions: self.id_iter_{{name}}(),
+            swaps: self.swap_positive_id_iter_{{name}}(ecs),
+        }
+    }
+    {{#if copy}}
+    pub fn positive_copy_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveCopyIter<'a, 'b, {{type}}> {
+        PositiveCopyIter {
+            insertions: self.copy_iter_{{name}}(),
+            swaps: self.swap_positive_copy_iter_{{name}}(ecs),
+        }
+    }
+    {{/if}}
+    pub fn negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeIdIter<'a, 'b, {{type}}> {
+        NegativeIdIter {
+            deletions: self.deletion_iter_{{name}}(),
+            swaps: self.swap_negative_id_iter_{{name}}(ecs),
+        }
+    }
+    pub fn negative_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeIdIter<'a, 'b, {{type}}> {
+        self.negative_id_iter_{{name}}(ecs)
+    }
 {{/each}}
 {{#each cell_components}}
     pub fn id_iter_{{name}}(&self) -> EntityBTreeMapKeys<RefCell<{{type}}>> {
@@ -151,10 +433,61 @@ impl EcsAction {
     pub fn iter_{{name}}(&self) -> EntityBTreeMapIter<RefCell<{{type}}>> {
         self.insertions.iter_{{name}}()
     }
+    pub fn swap_positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIter<'a, 'b, RefCell<{{type}}>> {
+        self.swaps.positive_iter_{{name}}(ecs)
+    }
+    pub fn swap_positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIdIter<'a, 'b, RefCell<{{type}}>> {
+        self.swaps.positive_id_iter_{{name}}(ecs)
+    }
+    pub fn swap_negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeIdIter<'a, 'b, RefCell<{{type}}>> {
+        self.swaps.negative_id_iter_{{name}}(ecs)
+    }
+    pub fn positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveIter<'a, 'b, RefCell<{{type}}>> {
+        PositiveIter {
+            insertions: self.iter_{{name}}(),
+            swaps: self.swap_positive_iter_{{name}}(ecs),
+        }
+    }
+    pub fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveIdIter<'a, 'b, RefCell<{{type}}>> {
+        PositiveIdIter {
+            insertions: self.id_iter_{{name}}(),
+            swaps: self.swap_positive_id_iter_{{name}}(ecs),
+        }
+    }
+    pub fn negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeIdIter<'a, 'b, RefCell<{{type}}>> {
+        NegativeIdIter {
+            deletions: self.deletion_iter_{{name}}(),
+            swaps: self.swap_negative_id_iter_{{name}}(ecs),
+        }
+    }
+    pub fn negative_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeIdIter<'a, 'b, RefCell<{{type}}>> {
+        self.negative_id_iter_{{name}}(ecs)
+    }
 {{/each}}
 {{#each flag_components}}
     pub fn id_iter_{{name}}(&self) -> FlagIdIter {
         self.insertions.id_iter_{{name}}()
+    }
+    pub fn swap_positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveFlagIdIter<'a, 'b> {
+        self.swaps.positive_id_iter_{{name}}(ecs)
+    }
+    pub fn swap_negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeFlagIdIter<'a, 'b> {
+        self.swaps.negative_id_iter_{{name}}(ecs)
+    }
+    pub fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveFlagIdIter<'a, 'b> {
+        PositiveFlagIdIter {
+            insertions: self.id_iter_{{name}}(),
+            swaps: self.swap_positive_id_iter_{{name}}(ecs),
+        }
+    }
+    pub fn negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeFlagIdIter<'a, 'b> {
+        NegativeFlagIdIter {
+            deletions: self.deletion_iter_{{name}}(),
+            swaps: self.swap_negative_id_iter_{{name}}(ecs),
+        }
+    }
+    pub fn negative_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeFlagIdIter<'a, 'b> {
+        self.negative_id_iter_{{name}}(ecs)
     }
 {{/each}}
 }
