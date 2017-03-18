@@ -149,7 +149,9 @@ pub fn full_template() -> String {
         templates::ENTITY_BTREE_SET +
         templates::ENTITY_BTREE_MAP +
         templates::ECS_CTX +
-        templates::ECS
+        templates::ECS +
+        templates::ENTITY +
+        templates::ENTITY_REF
 }
 
 pub fn render(model: &EcsModel, config: Config) -> String {

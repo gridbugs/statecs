@@ -48,6 +48,13 @@ impl EcsCtx {
         {{entity_mask}}
     }
 
+    pub fn entity(&self, id: EntityId) -> EntityRef {
+        EntityRef {
+            id: id,
+            ecs: self,
+        }
+    }
+
 {{#if component_bookkeeping}}
     {{#each components}}
     fn bookkeeping_insert_{{name}}(&mut self, id: EntityId) {
