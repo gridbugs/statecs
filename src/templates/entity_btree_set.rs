@@ -36,8 +36,9 @@ impl EntityBTreeSet {
     }
 
 {{#if combine_flag_set}}
-    pub fn range(&self, start: Bound<EntityId>, end: Bound<EntityId>) -> EntityBTreeSetRange {
-        EntityBTreeSetRange(self.inner.range((start, end)))
+    pub fn range<R>(&self, range: R) -> EntityBTreeSetRange
+    where R: RangeArgument<EntityId> {
+        EntityBTreeSetRange(self.inner.range(range))
     }
 {{/if}}
 

@@ -124,7 +124,7 @@ impl EcsCtx {
         let start = Bound::Included({{mask}});
         let end = Bound::Included({{mask}} | {{../entity_mask}});
 
-        self._flags.range(start, end)
+        self._flags.range((start, end))
     }
     {{else}}
     pub fn id_iter_{{name}}(&self) -> EntityBTreeSetIter {
