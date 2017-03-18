@@ -49,6 +49,12 @@ impl<T> EntityHashMap<T> {
     pub fn drain(&mut self) -> hash_map::Drain<EntityId, T> {
         self.0.drain()
     }
+
+    pub fn append(&mut self, other: &mut EntityHashMap<T>) {
+        for (id, value) in other.drain() {
+            self.insert(id, value);
+        }
+    }
 }
 
 impl<T: Copy> EntityHashMap<T> {

@@ -30,6 +30,12 @@ impl EntityHashSet {
         self.0.drain()
     }
 
+    pub fn append(&mut self, other: &mut EntityHashSet) {
+        for id in other.drain() {
+            self.insert(id);
+        }
+    }
+
     pub fn iter(&self) -> EntityHashSetIter {
         EntityHashSetIter(self.0.iter())
     }
