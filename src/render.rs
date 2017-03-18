@@ -151,7 +151,9 @@ pub fn full_template() -> String {
         templates::ECS_CTX +
         templates::ECS +
         templates::ENTITY +
-        templates::ENTITY_REF
+        templates::ENTITY_MUT +
+        templates::ENTITY_REF +
+        templates::ENTITY_REF_MUT
 }
 
 pub fn render(model: &EcsModel, config: Config) -> String {

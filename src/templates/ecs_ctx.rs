@@ -55,6 +55,13 @@ impl EcsCtx {
         }
     }
 
+    pub fn entity_mut(&mut self, id: EntityId) -> EntityRefMut {
+        EntityRefMut {
+            id: id,
+            ecs: self,
+        }
+    }
+
 {{#if component_bookkeeping}}
     {{#each components}}
     fn bookkeeping_insert_{{name}}(&mut self, id: EntityId) {
