@@ -2,7 +2,8 @@ pub const ECS_ACTION: &'static str = r#"
 
 struct EcsActionDeletions {
 {{#each components}}
-    {{name}}: EntityBTreeSet,
+    lookup_{{name}}: EntityBTreeSet,
+    apply_{{name}}: Vec<EntityId>,
 {{/each}}
     _empty: bool,
 }
@@ -11,7 +12,8 @@ impl EcsActionDeletions {
     fn new() -> Self {
         EcsActionDeletions {
 {{#each components}}
-            {{name}}: EntityBTreeSet::new(),
+            lookup_{{name}}: EntityBTreeSet::new(),
+            apply_{{name}}: Vec::new(),
 {{/each}}
             _empty: true,
         }
@@ -19,7 +21,8 @@ impl EcsActionDeletions {
 
     fn clear(&mut self) {
 {{#each components}}
-        self.{{name}}.clear();
+        self.lookup_{{name}}.clear();
+        self.apply_{{name}}.clear();
 {{/each}}
         self._empty = true;
     }
@@ -29,7 +32,8 @@ impl EcsActionDeletions {
 {{#each components}}
     fn delete_{{name}}(&mut self, id: EntityId) -> bool {
         self._empty = false;
-        self.{{name}}.insert(id)
+        self.apply_{{name}}.push(id);
+        self.lookup_{{name}}.insert(id)
     }
 {{/each}}
 }

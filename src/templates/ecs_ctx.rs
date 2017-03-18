@@ -168,6 +168,55 @@ impl EcsCtx {
     }
 
 {{/each}}
+
+    fn commit_swaps(&mut self, swaps: &mut EcsActionSwaps) {
+{{#each components}}
+        for (id_a, id_b) in swaps.apply_{{name}}.drain(..) {
+            self.swap_{{name}}(id_a, id_b);
+        }
+{{/each}}
+
+        swaps.clear();
+    }
+
+    fn commit_deletions(&mut self, deletions: &mut EcsActionDeletions) {
+{{#each components}}
+        for id in deletions.apply_{{name}}.drain(..) {
+            self.remove_{{name}}(id);
+        }
+{{/each}}
+
+        deletions.clear();
+    }
+
+    fn commit_insertions(&mut self, insertions: &mut EcsCtx) {
+{{#each data_components}}
+        self.{{name}}.append(&mut insertions.{{name}});
+{{/each}}
+{{#each cell_components}}
+        self.{{name}}.append(&mut insertions.{{name}});
+{{/each}}
+{{#if combine_flag_set}}
+        self._flags.append(&mut insertions._flags);
+{{else}}
+    {{#each flag_components}}
+        self.{{name}}.append(&mut insertions.{{name}});
+    {{/each}}
+{{/if}}
+    }
+
+    pub fn commit(&mut self, action: &mut EcsAction) {
+
+        if action.has_swaps() {
+            self.commit_swaps(&mut action.swaps);
+        }
+
+        if action.has_deletions() {
+            self.commit_deletions(&mut action.deletions);
+        }
+
+        self.commit_insertions(&mut action.insertions);
+    }
 }
 
 impl Ecs for EcsCtx {
