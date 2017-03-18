@@ -150,6 +150,7 @@ pub fn full_template() -> String {
         templates::ENTITY_BTREE_MAP +
         templates::ENTITY_HASH_SET +
         templates::ENTITY_HASH_MAP +
+        templates::ENTITY_COLLECTIONS +
         templates::ECS_CTX +
         templates::ECS_ACTION +
         templates::ECS_POST_ACTION +

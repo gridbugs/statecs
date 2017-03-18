@@ -2,7 +2,7 @@ pub const ECS_ACTION: &'static str = r#"
 
 struct EcsActionDeletions {
 {{#each components}}
-    lookup_{{name}}: EntityBTreeSet,
+    lookup_{{name}}: EcsActionEntitySet,
     apply_{{name}}: Vec<EntityId>,
 {{/each}}
     _empty: bool,
@@ -12,7 +12,7 @@ impl EcsActionDeletions {
     fn new() -> Self {
         EcsActionDeletions {
 {{#each components}}
-            lookup_{{name}}: EntityBTreeSet::new(),
+            lookup_{{name}}: EcsActionEntitySet::new(),
             apply_{{name}}: Vec::new(),
 {{/each}}
             _empty: true,
@@ -51,7 +51,7 @@ impl<'a> Iterator for DeletionIdIter<'a> {
 
 struct EcsActionSwaps {
 {{#each components}}
-    lookup_{{name}}: EntityBTreeMap<EntityId>,
+    lookup_{{name}}: EcsActionEntityMap<EntityId>,
     apply_{{name}}: Vec<(EntityId, EntityId)>,
 {{/each}}
     _empty: bool,
@@ -61,7 +61,7 @@ impl EcsActionSwaps {
     fn new() -> Self {
         EcsActionSwaps {
 {{#each components}}
-            lookup_{{name}}: EntityBTreeMap::new(),
+            lookup_{{name}}: EcsActionEntityMap::new(),
             apply_{{name}}: Vec::new(),
 {{/each}}
             _empty: true,
@@ -153,8 +153,8 @@ impl EcsActionSwaps {
 }
 
 struct SwapFlagIdIter<'a, 'b> {
-    iter: EntityBTreeMapIter<'a, EntityId>,
-    data: &'b EntityBTreeSet,
+    iter: EcsActionEntityMapIter<'a, EntityId>,
+    data: &'b EcsCtxEntitySet,
 {{#if combine_flag_set}}
     mask: u64,
 {{/if}}
@@ -199,8 +199,8 @@ impl<'a, 'b> Iterator for SwapNegativeFlagIdIter<'a, 'b> {
 }
 
 struct SwapIter<'a, 'b, T: 'b> {
-    iter: EntityBTreeMapIter<'a, EntityId>,
-    data: &'b EntityBTreeMap<T>,
+    iter: EcsActionEntityMapIter<'a, EntityId>,
+    data: &'b EcsCtxEntityMap<T>,
 }
 
 pub struct SwapPositiveIter<'a, 'b, T: 'b>(SwapIter<'a, 'b, T>);
@@ -254,7 +254,7 @@ impl<'a, 'b, T: 'b> Iterator for SwapNegativeIdIter<'a, 'b, T> {
 }
 
 pub struct PositiveIter<'a: 'b, 'b, T: 'a + 'b> {
-    insertions: EntityBTreeMapIter<'a, T>,
+    insertions: EcsCtxEntityMapIter<'a, T>,
     swaps: SwapPositiveIter<'a, 'b, T>,
 }
 impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIter<'a, 'b, T> {
@@ -265,7 +265,7 @@ impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIter<'a, 'b, T> {
 }
 
 pub struct PositiveIdIter<'a: 'b, 'b, T: 'a + 'b> {
-    insertions: EntityBTreeMapKeys<'a, T>,
+    insertions: EcsCtxEntityMapKeys<'a, T>,
     swaps: SwapPositiveIdIter<'a, 'b, T>,
 }
 impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIdIter<'a, 'b, T> {
@@ -276,7 +276,7 @@ impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIdIter<'a, 'b, T> {
 }
 
 pub struct PositiveCopyIter<'a: 'b, 'b, T: 'a + 'b + Copy> {
-    insertions: EntityBTreeMapCopyIter<'a, T>,
+    insertions: EcsCtxEntityMapCopyIter<'a, T>,
     swaps: SwapPositiveCopyIter<'a, 'b, T>,
 }
 impl<'a: 'b, 'b, T: 'a + 'b + Copy> Iterator for PositiveCopyIter<'a, 'b, T> {
@@ -371,14 +371,14 @@ impl EcsAction {
 {{/each}}
 
 {{#each data_components}}
-    pub fn id_iter_{{name}}(&self) -> EntityBTreeMapKeys<{{type}}> {
+    pub fn id_iter_{{name}}(&self) -> EcsCtxEntityMapKeys<{{type}}> {
         self.insertions.id_iter_{{name}}()
     }
-    pub fn iter_{{name}}(&self) -> EntityBTreeMapIter<{{type}}> {
+    pub fn iter_{{name}}(&self) -> EcsCtxEntityMapIter<{{type}}> {
         self.insertions.iter_{{name}}()
     }
     {{#if copy}}
-    pub fn copy_iter_{{name}}(&self) -> EntityBTreeMapCopyIter<{{type}}> {
+    pub fn copy_iter_{{name}}(&self) -> EcsCtxEntityMapCopyIter<{{type}}> {
         self.insertions.copy_iter_{{name}}()
     }
     {{/if}}
@@ -427,10 +427,10 @@ impl EcsAction {
     }
 {{/each}}
 {{#each cell_components}}
-    pub fn id_iter_{{name}}(&self) -> EntityBTreeMapKeys<RefCell<{{type}}>> {
+    pub fn id_iter_{{name}}(&self) -> EcsCtxEntityMapKeys<RefCell<{{type}}>> {
         self.insertions.id_iter_{{name}}()
     }
-    pub fn iter_{{name}}(&self) -> EntityBTreeMapIter<RefCell<{{type}}>> {
+    pub fn iter_{{name}}(&self) -> EcsCtxEntityMapIter<RefCell<{{type}}>> {
         self.insertions.iter_{{name}}()
     }
     pub fn swap_positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIter<'a, 'b, RefCell<{{type}}>> {

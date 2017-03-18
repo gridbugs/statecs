@@ -1,29 +1,23 @@
 pub const ECS_CTX: &'static str = r#"
 
-{{#if combine_flag_set}}
-pub type FlagIdIter<'a> = EntityBTreeSetRange<'a>;
-{{else}}
-pub type FlagIdIter<'a> = EntityBTreeSetIter<'a>;
-{{/if}}
-
 pub struct EcsCtx {
 {{#each data_components}}
-    {{name}}: EntityBTreeMap<{{type}}>,
+    {{name}}: EcsCtxEntityMap<{{type}}>,
 {{/each}}
 
 {{#each cell_components}}
-    {{name}}: EntityBTreeMap<RefCell<{{type}}>>,
+    {{name}}: EcsCtxEntityMap<RefCell<{{type}}>>,
 {{/each}}
 
 {{#if combine_flag_set}}
-    _flags: EntityBTreeSet,
+    _flags: EcsCtxEntitySet,
 {{else}}
     {{#each flag_components}}
-    {{name}}: EntityBTreeSet,
+    {{name}}: EcsCtxEntitySet,
     {{/each}}
 {{/if}}
 {{#if component_bookkeeping}}
-    _components: EntityBTreeMap<ComponentSet>,
+    _components: EcsCtxEntityMap<ComponentSet>,
 {{/if}}
 }
 
@@ -31,22 +25,22 @@ impl EcsCtx {
     pub fn new() -> Self {
         EcsCtx {
 {{#each data_components}}
-            {{name}}: EntityBTreeMap::new(),
+            {{name}}: EcsCtxEntityMap::new(),
 {{/each}}
 
 {{#each cell_components}}
-            {{name}}: EntityBTreeMap::new(),
+            {{name}}: EcsCtxEntityMap::new(),
 {{/each}}
 
 {{#if combine_flag_set}}
-            _flags: EntityBTreeSet::new(),
+            _flags: EcsCtxEntitySet::new(),
 {{else}}
     {{#each flag_components}}
-            {{name}}: EntityBTreeSet::new(),
+            {{name}}: EcsCtxEntitySet::new(),
     {{/each}}
 {{/if}}
 {{#if component_bookkeeping}}
-            _components: EntityBTreeMap::new(),
+            _components: EcsCtxEntityMap::new(),
 {{/if}}
         }
     }
@@ -103,14 +97,14 @@ impl EcsCtx {
     fn inner_remove_{{name}}(&mut self, id: EntityId) -> Option<{{type}}> {
         self.{{name}}.remove(id)
     }
-    pub fn id_iter_{{name}}(&self) -> EntityBTreeMapKeys<{{type}}> {
+    pub fn id_iter_{{name}}(&self) -> EcsCtxEntityMapKeys<{{type}}> {
         self.{{name}}.keys()
     }
-    pub fn iter_{{name}}(&self) -> EntityBTreeMapIter<{{type}}> {
+    pub fn iter_{{name}}(&self) -> EcsCtxEntityMapIter<{{type}}> {
         self.{{name}}.iter()
     }
     {{#if copy}}
-    pub fn copy_iter_{{name}}(&self) -> EntityBTreeMapCopyIter<{{type}}> {
+    pub fn copy_iter_{{name}}(&self) -> EcsCtxEntityMapCopyIter<{{type}}> {
         self.{{name}}.copy_iter()
     }
     {{/if}}
@@ -123,10 +117,10 @@ impl EcsCtx {
     fn inner_bare_remove_{{name}}(&mut self, id: EntityId) -> Option<RefCell<{{type}}>> {
         self.{{name}}.remove(id)
     }
-    pub fn id_iter_{{name}}(&self) -> EntityBTreeMapKeys<RefCell<{{type}}>> {
+    pub fn id_iter_{{name}}(&self) -> EcsCtxEntityMapKeys<RefCell<{{type}}>> {
         self.{{name}}.keys()
     }
-    pub fn iter_{{name}}(&self) -> EntityBTreeMapIter<RefCell<{{type}}>> {
+    pub fn iter_{{name}}(&self) -> EcsCtxEntityMapIter<RefCell<{{type}}>> {
         self.{{name}}.iter()
     }
 {{/each}}
