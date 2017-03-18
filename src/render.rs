@@ -148,6 +148,8 @@ pub fn full_template() -> String {
         templates::COMPONENT_SET +
         templates::ENTITY_BTREE_SET +
         templates::ENTITY_BTREE_MAP +
+        templates::ENTITY_HASH_SET +
+        templates::ENTITY_HASH_MAP +
         templates::ECS_CTX +
         templates::ECS_ACTION +
         templates::ECS_POST_ACTION +

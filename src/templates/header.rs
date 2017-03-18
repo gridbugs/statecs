@@ -4,6 +4,8 @@ pub const HEADER: &'static str = r#"// Automatically generated. Do not edit.
 
 use std::collections::{BTreeSet, btree_set};
 use std::collections::{BTreeMap, btree_map};
+use std::collections::{HashSet, hash_set};
+use std::collections::{HashMap, hash_map};
 use std::collections::Bound;
 use std::collections::range::RangeArgument;
 use std::cell::{Ref, RefMut, RefCell};
