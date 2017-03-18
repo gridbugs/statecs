@@ -3,6 +3,8 @@ pub struct Config {
     pub single_component_bitfield: bool,
     pub combine_flag_set: bool,
     pub component_bookkeeping: bool,
+    pub ecs_ctx_hash_collections: bool,
+    pub ecs_action_hash_collections: bool,
 }
 
 impl Config {
@@ -11,6 +13,8 @@ impl Config {
             single_component_bitfield: true,
             combine_flag_set: true,
             component_bookkeeping: false,
+            ecs_ctx_hash_collections: false,
+            ecs_action_hash_collections: false,
         }
     }
 }
