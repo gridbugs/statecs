@@ -1,53 +1,49 @@
 pub const ENTITY_BTREE_SET: &'static str = r#"
 #[derive(Clone)]
-pub struct EntityBTreeSet {
-    inner: BTreeSet<EntityId>,
-}
+pub struct EntityBTreeSet(BTreeSet<EntityId>);
 
 impl EntityBTreeSet {
     pub fn new() -> Self {
-        EntityBTreeSet {
-            inner: BTreeSet::new(),
-        }
+        EntityBTreeSet(BTreeSet::new())
     }
 
     pub fn insert(&mut self, entity: EntityId) -> bool {
-        self.inner.insert(entity)
+        self.0.insert(entity)
     }
 
     pub fn remove(&mut self, entity: EntityId) -> bool {
-        self.inner.remove(&entity)
+        self.0.remove(&entity)
     }
 
     pub fn contains(&self, entity: EntityId) -> bool {
-        self.inner.contains(&entity)
+        self.0.contains(&entity)
     }
 
     pub fn len(&self) -> usize {
-        self.inner.len()
+        self.0.len()
     }
 
     pub fn clear(&mut self) {
-        self.inner.clear()
+        self.0.clear()
     }
 
     pub fn iter(&self) -> EntityBTreeSetIter {
-        EntityBTreeSetIter(self.inner.iter())
+        EntityBTreeSetIter(self.0.iter())
     }
 
 {{#if combine_flag_set}}
     pub fn range<R>(&self, range: R) -> EntityBTreeSetRange
     where R: RangeArgument<EntityId> {
-        EntityBTreeSetRange(self.inner.range(range))
+        EntityBTreeSetRange(self.0.range(range))
     }
 {{/if}}
 
     pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.0.is_empty()
     }
 
     pub fn append(&mut self, other: &mut EntityBTreeSet) {
-        self.inner.append(&mut other.inner);
+        self.0.append(&mut other.0);
     }
 }
 
