@@ -149,6 +149,7 @@ pub fn full_template() -> String {
         templates::ENTITY_BTREE_SET +
         templates::ENTITY_BTREE_MAP +
         templates::ECS_CTX +
+        templates::ECS_ACTION +
         templates::ECS +
         templates::ENTITY +
         templates::ENTITY_MUT +

@@ -1,4 +1,11 @@
 pub const ECS_CTX: &'static str = r#"
+
+{{#if combine_flag_set}}
+pub type FlagIdIter<'a> = EntityBTreeSetRange<'a>;
+{{else}}
+pub type FlagIdIter<'a> = EntityBTreeSetIter<'a>;
+{{/if}}
+
 pub struct EcsCtx {
 {{#each data_components}}
     {{name}}: EntityBTreeMap<{{type}}>,
@@ -60,6 +67,22 @@ impl EcsCtx {
             id: id,
             ecs: self,
         }
+    }
+
+    pub fn clear(&mut self) {
+{{#each data_components}}
+        self.{{name}}.clear();
+{{/each}}
+{{#each cell_components}}
+        self.{{name}}.clear();
+{{/each}}
+{{#each flag_components}}
+    {{#if ../combine_flag_set}}
+        self._flags.clear();
+    {{else}}
+        self.{{name}}.clear();
+    {{/if}}
+{{/each}}
     }
 
 {{#if component_bookkeeping}}
@@ -133,18 +156,16 @@ impl EcsCtx {
     {{/if}}
     }
 
+    pub fn id_iter_{{name}}(&self) -> FlagIdIter {
     {{#if ../combine_flag_set}}
-    pub fn id_iter_{{name}}(&self) -> EntityBTreeSetRange {
         let start = Bound::Included({{mask}});
         let end = Bound::Included({{mask}} | {{../entity_mask}});
 
         self._flags.range((start, end))
-    }
     {{else}}
-    pub fn id_iter_{{name}}(&self) -> EntityBTreeSetIter {
         self.{{name}}.iter()
-    }
     {{/if}}
+    }
 
 {{/each}}
 }
