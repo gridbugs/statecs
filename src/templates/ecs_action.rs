@@ -39,6 +39,33 @@ impl EcsActionDeletions {
         DeletionIdIter(self.apply_{{name}}.iter())
     }
 {{/each}}
+
+    fn entity_delete(&mut self, entity: EntityRef) {
+{{#if unchecked_entity_delete}}
+    {{#each components}}
+        self.delete_{{name}}(entity.id());
+    {{/each}}
+{{else}}
+    {{#if component_bookkeeping}}
+        if let Some(component_set) = entity.ecs._components.get(entity.id) {
+            for component_id in component_set.iter() {
+                match component_id {
+        {{#each components}}
+                    {{id}} => { self.delete_{{name}}(entity.id); }
+        {{/each}}
+                    other => { panic!("No such component: {}", other); }
+                }
+            }
+        }
+    {{else}}
+        {{#each components}}
+        if entity.contains_{{name}}() {
+            self.delete_{{name}}(entity.id());
+        }
+        {{/each}}
+    {{/if}}
+{{/if}}
+    }
 }
 
 pub struct DeletionIdIter<'a>(slice::Iter<'a, EntityId>);
@@ -356,6 +383,10 @@ impl EcsAction {
             ecs: &mut self.insertions,
             id: id,
         }
+    }
+
+    pub fn entity_delete(&mut self, entity: EntityRef) {
+        self.deletions.entity_delete(entity);
     }
 
 {{#each components}}

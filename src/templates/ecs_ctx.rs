@@ -183,6 +183,28 @@ impl EcsCtx {
         deletions.clear();
     }
 
+    fn commit_deletions_into(&mut self, deletions: &mut EcsActionDeletions, dest: &mut EcsAction) {
+{{#each data_components}}
+        for id in deletions.apply_{{name}}.drain(..) {
+            self.remove_{{name}}(id).map(|c| dest.insert_{{name}}(id, c));
+        }
+{{/each}}
+{{#each cell_components}}
+        for id in deletions.apply_{{name}}.drain(..) {
+            self.remove_{{name}}(id).map(|c| dest.insert_{{name}}(id, c));
+        }
+{{/each}}
+{{#each flag_components}}
+        for id in deletions.apply_{{name}}.drain(..) {
+            if self.remove_{{name}}(id) {
+                dest.insert_{{name}}(id);
+            }
+        }
+{{/each}}
+
+        deletions.clear();
+    }
+
     fn commit_insertions(&mut self, insertions: &mut EcsCtx) {
 {{#each data_components}}
         self.{{name}}.append(&mut insertions.{{name}});
@@ -207,6 +229,19 @@ impl EcsCtx {
 
         if action.has_deletions() {
             self.commit_deletions(&mut action.deletions);
+        }
+
+        self.commit_insertions(&mut action.insertions);
+    }
+
+    pub fn commit_into(&mut self, action: &mut EcsAction, dest: &mut EcsAction) {
+
+        if action.has_swaps() {
+            self.commit_swaps(&mut action.swaps);
+        }
+
+        if action.has_deletions() {
+            self.commit_deletions_into(&mut action.deletions, dest);
         }
 
         self.commit_insertions(&mut action.insertions);
