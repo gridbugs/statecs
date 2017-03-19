@@ -525,20 +525,38 @@ impl EcsAction {
 
 impl Ecs for EcsAction {
 {{#each data_components}}
+    fn get_{{name}}(&self, id: EntityId) -> Option<&{{type}}> {
+        self.insertions.get_{{name}}(id)
+    }
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.insertions.contains_{{name}}(id)
+    }
+{{/each}}
+{{#each cell_components}}
+    fn bare_get_{{name}}(&self, id: EntityId) -> Option<&RefCell<{{type}}>> {
+        self.insertions.bare_get_{{name}}(id)
+    }
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.insertions.contains_{{name}}(id)
+    }
+{{/each}}
+{{#each flag_components}}
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.insertions.contains_{{name}}(id)
+    }
+{{/each}}
+}
+
+impl EcsMut for EcsAction {
+{{#each data_components}}
     fn insert_{{name}}(&mut self, id: EntityId, data: {{type}}) -> Option<{{type}}> {
         self.insertions.insert_{{name}}(id, data)
     }
     fn remove_{{name}}(&mut self, id: EntityId) -> Option<{{type}}> {
         self.insertions.remove_{{name}}(id)
     }
-    fn get_{{name}}(&self, id: EntityId) -> Option<&{{type}}> {
-        self.insertions.get_{{name}}(id)
-    }
     fn get_mut_{{name}}(&mut self, id: EntityId) -> Option<&mut {{type}}> {
         self.insertions.get_mut_{{name}}(id)
-    }
-    fn contains_{{name}}(&self, id: EntityId) -> bool {
-        self.insertions.contains_{{name}}(id)
     }
 {{/each}}
 {{#each cell_components}}
@@ -548,12 +566,6 @@ impl Ecs for EcsAction {
     fn bare_remove_{{name}}(&mut self, id: EntityId) -> Option<RefCell<{{type}}>> {
         self.insertions.bare_remove_{{name}}(id)
     }
-    fn bare_get_{{name}}(&self, id: EntityId) -> Option<&RefCell<{{type}}>> {
-        self.insertions.bare_get_{{name}}(id)
-    }
-    fn contains_{{name}}(&self, id: EntityId) -> bool {
-        self.insertions.contains_{{name}}(id)
-    }
 {{/each}}
 {{#each flag_components}}
     fn insert_{{name}}(&mut self, id: EntityId) -> bool {
@@ -561,9 +573,6 @@ impl Ecs for EcsAction {
     }
     fn remove_{{name}}(&mut self, id: EntityId) -> bool {
         self.insertions.remove_{{name}}(id)
-    }
-    fn contains_{{name}}(&self, id: EntityId) -> bool {
-        self.insertions.contains_{{name}}(id)
     }
 {{/each}}
 }

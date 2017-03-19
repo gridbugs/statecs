@@ -1,6 +1,6 @@
 pub const ENTITY_MUT: &'static str = r#"
 pub trait EntityMut {
-    type Ecs: Ecs;
+    type Ecs: Ecs + EcsMut;
 
     fn ecs(&self) -> &Self::Ecs;
     fn ecs_mut(&mut self) -> &mut Self::Ecs;

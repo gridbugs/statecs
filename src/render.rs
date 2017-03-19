@@ -161,6 +161,7 @@ pub fn full_template() -> String {
         templates::ECS_ACTION +
         templates::ECS_POST_ACTION +
         templates::ECS +
+        templates::ECS_MUT +
         templates::ENTITY +
         templates::ENTITY_MUT +
         templates::ENTITY_REF +

@@ -250,6 +250,34 @@ impl EcsCtx {
 
 impl Ecs for EcsCtx {
 {{#each data_components}}
+    fn get_{{name}}(&self, id: EntityId) -> Option<&{{type}}> {
+        self.{{name}}.get(id)
+    }
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.{{name}}.contains_key(id)
+    }
+{{/each}}
+{{#each cell_components}}
+    fn bare_get_{{name}}(&self, id: EntityId) -> Option<&RefCell<{{type}}>> {
+        self.{{name}}.get(id)
+    }
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.{{name}}.contains_key(id)
+    }
+{{/each}}
+{{#each flag_components}}
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+    {{#if ../combine_flag_set}}
+        self._flags.contains(Self::flag_key_{{name}}(id))
+    {{else}}
+        self.{{name}}.contains(id)
+    {{/if}}
+    }
+{{/each}}
+}
+
+impl EcsMut for EcsCtx {
+{{#each data_components}}
     fn insert_{{name}}(&mut self, id: EntityId, data: {{type}}) -> Option<{{type}}> {
     {{#if ../component_bookkeeping}}
         self.bookkeeping_insert_{{name}}(id);
@@ -262,14 +290,8 @@ impl Ecs for EcsCtx {
     {{/if}}
         self.inner_remove_{{name}}(id)
     }
-    fn get_{{name}}(&self, id: EntityId) -> Option<&{{type}}> {
-        self.{{name}}.get(id)
-    }
     fn get_mut_{{name}}(&mut self, id: EntityId) -> Option<&mut {{type}}> {
         self.{{name}}.get_mut(id)
-    }
-    fn contains_{{name}}(&self, id: EntityId) -> bool {
-        self.{{name}}.contains_key(id)
     }
 {{/each}}
 {{#each cell_components}}
@@ -285,12 +307,6 @@ impl Ecs for EcsCtx {
     {{/if}}
         self.inner_bare_remove_{{name}}(id)
     }
-    fn bare_get_{{name}}(&self, id: EntityId) -> Option<&RefCell<{{type}}>> {
-        self.{{name}}.get(id)
-    }
-    fn contains_{{name}}(&self, id: EntityId) -> bool {
-        self.{{name}}.contains_key(id)
-    }
 {{/each}}
 {{#each flag_components}}
     fn insert_{{name}}(&mut self, id: EntityId) -> bool {
@@ -304,13 +320,6 @@ impl Ecs for EcsCtx {
         self.bookkeeping_remove_{{name}}(id);
     {{/if}}
         self.inner_remove_{{name}}(id)
-    }
-    fn contains_{{name}}(&self, id: EntityId) -> bool {
-    {{#if ../combine_flag_set}}
-        self._flags.contains(Self::flag_key_{{name}}(id))
-    {{else}}
-        self.{{name}}.contains(id)
-    {{/if}}
     }
 {{/each}}
 }
