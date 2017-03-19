@@ -24,6 +24,7 @@ pub struct EcsSpec {
     pub data: Vec<DataComponentSpec>,
     pub cells: Vec<CellComponentSpec>,
     pub flags: Vec<FlagComponentSpec>,
+    pub imports: Vec<String>,
 }
 
 fn return_false() -> bool { false }

@@ -1,8 +1,21 @@
 use handlebars::Handlebars;
 
+use std::collections::HashSet;
+
 use model::*;
 use config::*;
 use templates;
+
+const IMPORTS: [&'static str; 8] = [
+    "std::collections::{BTreeSet, btree_set}",
+    "std::collections::{BTreeMap, btree_map}",
+    "std::collections::{HashSet, hash_set}",
+    "std::collections::{HashMap, hash_map}",
+    "std::collections::Bound",
+    "std::collections::range::RangeArgument",
+    "std::cell::{Ref, RefMut, RefCell}",
+    "std::slice",
+];
 
 #[derive(Serialize, Debug)]
 struct ComponentTemplateData {
@@ -66,6 +79,7 @@ struct TemplateData {
     pub data_components: Vec<DataComponentTemplateData>,
     pub cell_components: Vec<CellComponentTemplateData>,
     pub flag_components: Vec<FlagComponentTemplateData>,
+    pub imports: HashSet<String>,
 }
 
 impl TemplateData {
@@ -96,6 +110,7 @@ impl TemplateData {
             data_components: Vec::new(),
             cell_components: Vec::new(),
             flag_components: Vec::new(),
+            imports: IMPORTS.iter().map(|s| s.to_string()).collect(),
         };
 
         for c in model.common.iter() {
@@ -143,6 +158,10 @@ impl TemplateData {
                     mask: mask,
                 });
             }
+        }
+
+        for import in model.imports.iter() {
+            data.imports.insert(import.clone());
         }
 
         data

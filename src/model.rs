@@ -41,6 +41,7 @@ pub struct EcsModel {
     pub data: BTreeMap<u64, DataComponentModel>,
     pub cells: BTreeMap<u64, CellComponentModel>,
     pub flags: BTreeSet<u64>,
+    pub imports: Vec<String>,
 }
 
 impl EcsModel {
@@ -50,6 +51,7 @@ impl EcsModel {
             data: BTreeMap::new(),
             cells: BTreeMap::new(),
             flags: BTreeSet::new(),
+            imports: Vec::new(),
         }
     }
     pub fn num_components(&self) -> usize { self.common.len() }
@@ -90,6 +92,8 @@ impl<'a> From<&'a EcsSpec> for EcsModel {
             model.flags.insert(id);
             id += 1;
         }
+
+        model.imports = spec.imports.clone();
 
         model
     }
