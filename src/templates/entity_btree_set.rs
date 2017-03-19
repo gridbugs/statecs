@@ -1,5 +1,5 @@
 pub const ENTITY_BTREE_SET: &'static str = r#"
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct EntityBTreeSet(BTreeSet<EntityId>);
 
 impl EntityBTreeSet {

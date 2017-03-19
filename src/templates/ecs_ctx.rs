@@ -1,5 +1,6 @@
 pub const ECS_CTX: &'static str = r#"
 
+#[derive(Clone)]
 pub struct EcsCtx {
 {{#each data_components}}
     {{name}}: EcsCtxEntityMap<{{type}}>,

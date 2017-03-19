@@ -1,5 +1,5 @@
 pub const ENTITY_BTREE_MAP: &'static str = r#"
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct EntityBTreeMap<T>(BTreeMap<EntityId, T>);
 
 impl<T> EntityBTreeMap<T> {

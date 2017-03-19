@@ -1,4 +1,5 @@
 pub const ENTITY_HASH_SET: &'static str = r#"
+#[derive(Clone, Serialize, Deserialize)]
 pub struct EntityHashSet(HashSet<EntityId>);
 
 impl EntityHashSet {

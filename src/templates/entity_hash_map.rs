@@ -1,4 +1,5 @@
 pub const ENTITY_HASH_MAP: &'static str = r#"
+#[derive(Clone, Serialize, Deserialize)]
 pub struct EntityHashMap<T>(HashMap<EntityId, T>);
 
 impl<T> EntityHashMap<T> {
