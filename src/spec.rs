@@ -21,10 +21,18 @@ pub struct FlagComponentSpec {
 
 #[derive(Deserialize, Debug)]
 pub struct EcsSpec {
+    #[serde(default = "Vec::new")]
     pub data: Vec<DataComponentSpec>,
+    #[serde(default = "Vec::new")]
     pub cells: Vec<CellComponentSpec>,
+    #[serde(default = "Vec::new")]
     pub flags: Vec<FlagComponentSpec>,
+    #[serde(default = "Vec::new")]
     pub imports: Vec<String>,
+    #[serde(default = "Vec::new")]
+    pub action_data: Vec<DataComponentSpec>,
+    #[serde(default = "Vec::new")]
+    pub action_flags: Vec<FlagComponentSpec>,
 }
 
 fn return_false() -> bool { false }

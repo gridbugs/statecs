@@ -42,6 +42,9 @@ pub struct EcsModel {
     pub cells: BTreeMap<u64, CellComponentModel>,
     pub flags: BTreeSet<u64>,
     pub imports: Vec<String>,
+    pub action_common: Vec<CommonComponentModel>,
+    pub action_data: BTreeMap<u64, DataComponentModel>,
+    pub action_flags: BTreeSet<u64>,
 }
 
 impl EcsModel {
@@ -52,14 +55,27 @@ impl EcsModel {
             cells: BTreeMap::new(),
             flags: BTreeSet::new(),
             imports: Vec::new(),
+            action_common: Vec::new(),
+            action_data: BTreeMap::new(),
+            action_flags: BTreeSet::new(),
         }
     }
     pub fn num_components(&self) -> usize { self.common.len() }
+    pub fn num_action_properties(&self) -> usize { self.action_common.len() }
+
     pub fn bitfield_size(&self) -> usize {
         if self.num_components() == 0 {
             1
         } else {
             (self.num_components() - 1) / 64 + 1
+        }
+    }
+
+    pub fn action_bitfield_size(&self) -> usize {
+        if self.num_action_properties() == 0 {
+            1
+        } else {
+            (self.num_action_properties() - 1) / 64 + 1
         }
     }
 }
@@ -94,6 +110,22 @@ impl<'a> From<&'a EcsSpec> for EcsModel {
         }
 
         model.imports = spec.imports.clone();
+
+        let mut action_id = 0;
+        for d in spec.action_data.iter() {
+            model.action_common.push(CommonComponentModel::new(d.name.clone(), action_id));
+            model.action_data.insert(action_id, DataComponentModel {
+                type_name: d.type_name.clone(),
+                copy: d.copy,
+            });
+            action_id += 1;
+        }
+
+        for f in spec.action_flags.iter() {
+            model.action_common.push(CommonComponentModel::new(f.name.clone(), action_id));
+            model.action_flags.insert(action_id);
+            action_id += 1;
+        }
 
         model
     }
