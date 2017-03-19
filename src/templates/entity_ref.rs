@@ -5,6 +5,12 @@ pub struct EntityRef<'a> {
     id: EntityId,
 }
 
+impl<'a> EntityRef<'a> {
+    pub fn post<'b>(self, action: &'b EcsAction) -> EntityRefPostAction<'a, 'b> {
+        self.ecs.post_entity(action, self.id)
+    }
+}
+
 impl<'a> Entity<'a> for EntityRef<'a> {
     type Ecs = EcsCtx;
     fn ecs(self) -> &'a Self::Ecs { self.ecs }

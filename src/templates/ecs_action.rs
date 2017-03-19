@@ -38,6 +38,9 @@ impl EcsActionDeletions {
     fn iter_{{name}}(&self) -> DeletionIdIter {
         DeletionIdIter(self.apply_{{name}}.iter())
     }
+    fn will_delete_{{name}}(&self, id: EntityId) -> bool {
+        self.lookup_{{name}}.contains(id)
+    }
 {{/each}}
 
     fn entity_delete(&mut self, entity: EntityRef) {
@@ -117,6 +120,9 @@ impl EcsActionSwaps {
         self.apply_{{name}}.push((id_a, id_b));
 
         self._empty = false;
+    }
+    fn will_swap_{{name}}(&self, id: EntityId) -> Option<EntityId> {
+        self.lookup_{{name}}.get(id).map(|r| *r)
     }
 {{/each}}
 {{#each data_components}}
@@ -389,6 +395,14 @@ impl EcsAction {
         self.deletions.entity_delete(entity);
     }
 
+    pub fn post<'a, 'b>(&'b self, ctx: &'a EcsCtx) -> EcsPostAction<'a, 'b> {
+        ctx.post(self)
+    }
+
+    pub fn post_entity<'a, 'b>(&'b self, ctx: &'a EcsCtx, id: EntityId) -> EntityRefPostAction<'a, 'b> {
+        ctx.post(self).entity(id)
+    }
+
 {{#each components}}
     pub fn delete_{{name}}(&mut self, id: EntityId) -> bool {
         self.deletions.delete_{{name}}(id)
@@ -398,6 +412,12 @@ impl EcsAction {
     }
     pub fn deletion_iter_{{name}}(&self) -> DeletionIdIter {
         self.deletions.iter_{{name}}()
+    }
+    pub fn will_delete_{{name}}(&self, id: EntityId) -> bool {
+        self.deletions.will_delete_{{name}}(id)
+    }
+    pub fn will_swap_{{name}}(&self, id: EntityId) -> Option<EntityId> {
+        self.swaps.will_swap_{{name}}(id)
     }
 {{/each}}
 

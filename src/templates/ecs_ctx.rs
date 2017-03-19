@@ -246,6 +246,17 @@ impl EcsCtx {
 
         self.commit_insertions(&mut action.insertions);
     }
+
+    pub fn post<'a, 'b>(&'a self, action: &'b EcsAction) -> EcsPostAction<'a, 'b> {
+        EcsPostAction {
+            ecs: self,
+            action: action,
+        }
+    }
+
+    pub fn post_entity<'a, 'b>(&'a self, action: &'b EcsAction, id: EntityId) -> EntityRefPostAction<'a, 'b> {
+        self.post(action).entity(id)
+    }
 }
 
 impl Ecs for EcsCtx {

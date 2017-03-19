@@ -14,6 +14,7 @@ mod entity;
 mod entity_mut;
 mod entity_ref;
 mod entity_ref_mut;
+mod entity_ref_post_action;
 
 pub use self::header::*;
 pub use self::component_set::*;
@@ -31,3 +32,4 @@ pub use self::entity::*;
 pub use self::entity_mut::*;
 pub use self::entity_ref::*;
 pub use self::entity_ref_mut::*;
+pub use self::entity_ref_post_action::*;

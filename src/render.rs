@@ -165,7 +165,8 @@ pub fn full_template() -> String {
         templates::ENTITY +
         templates::ENTITY_MUT +
         templates::ENTITY_REF +
-        templates::ENTITY_REF_MUT
+        templates::ENTITY_REF_MUT +
+        templates::ENTITY_REF_POST_ACTION
 }
 
 pub fn render(model: &EcsModel, config: Config) -> String {
