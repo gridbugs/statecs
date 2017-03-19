@@ -6,8 +6,8 @@ impl EntityHashSet {
         EntityHashSet(HashSet::new())
     }
 
-    pub fn insert(&mut self, entity: EntityId) {
-        self.0.insert(entity);
+    pub fn insert(&mut self, entity: EntityId) -> bool {
+        self.0.insert(entity)
     }
 
     pub fn remove(&mut self, entity: EntityId) -> bool {

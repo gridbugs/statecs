@@ -6,8 +6,8 @@ impl<T> EntityHashMap<T> {
         EntityHashMap(HashMap::new())
     }
 
-    pub fn insert(&mut self, entity: EntityId, value: T) {
-        self.0.insert(entity, value);
+    pub fn insert(&mut self, entity: EntityId, value: T) -> Option<T> {
+        self.0.insert(entity, value)
     }
 
     pub fn get(&self, entity: EntityId) -> Option<&T> {
