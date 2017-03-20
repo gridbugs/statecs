@@ -265,6 +265,13 @@ impl EcsCtx {
     pub fn post_entity<'a, 'b>(&'a self, action: &'b EcsAction, id: EntityId) -> EntityRefPostAction<'a, 'b> {
         self.post(action).entity(id)
     }
+
+    pub fn entity_iter<I: Iterator<Item=EntityId>>(&self, iter: I) -> EntityRefIter<I> {
+        EntityRefIter {
+            ctx: self,
+            iter: iter,
+        }
+    }
 }
 
 impl Ecs for EcsCtx {
@@ -341,5 +348,17 @@ impl EcsMut for EcsCtx {
         self.inner_remove_{{name}}(id)
     }
 {{/each}}
+}
+
+pub struct EntityRefIter<'a, I: Iterator<Item=EntityId>> {
+    ctx: &'a EcsCtx,
+    iter: I,
+}
+
+impl<'a, I: Iterator<Item=EntityId>> Iterator for EntityRefIter<'a, I> {
+    type Item = EntityRef<'a>;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|id| self.ctx.entity(id))
+    }
 }
 "#;
