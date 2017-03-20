@@ -6,7 +6,7 @@ use model::*;
 use config::*;
 use templates;
 
-const IMPORTS: [&'static str; 8] = [
+const IMPORTS: [&'static str; 9] = [
     "std::collections::{BTreeSet, btree_set}",
     "std::collections::{BTreeMap, btree_map}",
     "std::collections::{HashSet, hash_set}",
@@ -15,6 +15,7 @@ const IMPORTS: [&'static str; 8] = [
     "std::collections::range::RangeArgument",
     "std::cell::{Ref, RefMut, RefCell}",
     "std::slice",
+    "std::mem",
 ];
 
 #[derive(Serialize, Debug)]
@@ -72,6 +73,7 @@ struct TemplateData {
     pub combine_flag_set: bool,
     pub unchecked_entity_delete: bool,
     pub component_bookkeeping: bool,
+    pub action_property_bookkeeping: bool,
     pub ecs_ctx_hash_collections: bool,
     pub ecs_action_hash_collections: bool,
     pub entity_bits: u32,
@@ -107,6 +109,7 @@ impl TemplateData {
             single_component_bitfield: config.single_component_bitfield && model.bitfield_size() == 1,
             combine_flag_set: config.combine_flag_set && !config.ecs_ctx_hash_collections,
             component_bookkeeping: config.component_bookkeeping && !config.unchecked_entity_delete,
+            action_property_bookkeeping: config.action_property_bookkeeping,
             unchecked_entity_delete: config.unchecked_entity_delete,
             ecs_ctx_hash_collections: config.ecs_ctx_hash_collections,
             ecs_action_hash_collections: config.ecs_action_hash_collections,

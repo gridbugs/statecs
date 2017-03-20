@@ -356,6 +356,7 @@ pub struct EcsAction {
     insertions: EcsCtx,
     deletions: EcsActionDeletions,
     swaps: EcsActionSwaps,
+    properties: ActionProperties,
 }
 
 impl EcsAction {
@@ -364,6 +365,7 @@ impl EcsAction {
             insertions: EcsCtx::new(),
             deletions: EcsActionDeletions::new(),
             swaps: EcsActionSwaps::new(),
+            properties: ActionProperties::new(),
         }
     }
 
@@ -371,6 +373,7 @@ impl EcsAction {
         self.insertions.clear();
         self.deletions.clear();
         self.swaps.clear();
+        self.properties.clear();
     }
 
     pub fn has_deletions(&self) -> bool { !self.deletions.is_empty() }
@@ -539,6 +542,38 @@ impl EcsAction {
     }
     pub fn negative_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> NegativeFlagIdIter<'a, 'b> {
         self.negative_id_iter_{{name}}(ecs)
+    }
+{{/each}}
+
+{{#each data_action_properties}}
+    fn insert_property_{{name}}(&mut self, data: {{type}}) -> Option<{{type}}> {
+        self.properties.insert_property_{{name}}(data)
+    }
+    fn remove_property_{{name}}(&mut self) -> Option<{{type}}> {
+        self.properties.remove_property_{{name}}()
+    }
+    fn get_property_{{name}}(&self) -> Option<&{{type}}> {
+        self.properties.get_property_{{name}}()
+    }
+    fn contains_property_{{name}}(&self) -> bool {
+        self.properties.contains_property_{{name}}()
+    }
+    {{#if copy}}
+    fn get_property_copy_{{name}}(&self) -> Option<{{type}}> {
+        self.properties.get_property_copy_{{name}}()
+    }
+    {{/if}}
+{{/each}}
+
+{{#each flag_action_properties}}
+    fn insert_property_{{name}}(&mut self) -> bool {
+        self.properties.insert_property_{{name}}()
+    }
+    fn remove_property_{{name}}(&mut self) -> bool {
+        self.properties.remove_property_{{name}}()
+    }
+    fn contains_property_{{name}}(&self) -> bool {
+        self.properties.contains_property_{{name}}()
     }
 {{/each}}
 }

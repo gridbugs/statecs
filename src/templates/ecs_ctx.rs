@@ -78,6 +78,9 @@ impl EcsCtx {
         self.{{name}}.clear();
     {{/if}}
 {{/each}}
+{{#if component_bookkeeping}}
+        self._components.clear();
+{{/if}}
     }
 
 {{#if component_bookkeeping}}
@@ -233,6 +236,8 @@ impl EcsCtx {
         }
 
         self.commit_insertions(&mut action.insertions);
+
+        action.properties.clear();
     }
 
     pub fn commit_into(&mut self, action: &mut EcsAction, dest: &mut EcsAction) {
@@ -246,6 +251,8 @@ impl EcsCtx {
         }
 
         self.commit_insertions(&mut action.insertions);
+
+        action.properties.clear();
     }
 
     pub fn post<'a, 'b>(&'a self, action: &'b EcsAction) -> EcsPostAction<'a, 'b> {
