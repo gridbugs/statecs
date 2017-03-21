@@ -6,16 +6,19 @@ use model::*;
 use config::*;
 use templates;
 
-const IMPORTS: [&'static str; 9] = [
+const IMPORTS: [&'static str; 7] = [
     "std::collections::{BTreeSet, btree_set}",
     "std::collections::{BTreeMap, btree_map}",
     "std::collections::{HashSet, hash_set}",
     "std::collections::{HashMap, hash_map}",
-    "std::collections::Bound",
-    "std::collections::range::RangeArgument",
     "std::cell::{Ref, RefMut, RefCell}",
     "std::slice",
     "std::mem",
+];
+
+const IMPORTS_EXPERIMENTAL: [&'static str; 2] = [
+    "std::collections::Bound",
+    "std::collections::range::RangeArgument",
 ];
 
 #[derive(Serialize, Debug)]
@@ -208,6 +211,12 @@ impl TemplateData {
 
         for import in model.imports.iter() {
             data.imports.insert(import.clone());
+        }
+
+        if config.combine_flag_set {
+            for import in IMPORTS_EXPERIMENTAL.iter() {
+                data.imports.insert(import.to_string());
+            }
         }
 
         data
