@@ -43,18 +43,18 @@ impl EcsActionDeletions {
     }
 {{/each}}
 
-    fn entity_delete(&mut self, entity: EntityRef) {
+    fn entity_delete_by_id(&mut self, id: EntityId, ctx: &EcsCtx) {
 {{#if unchecked_entity_delete}}
     {{#each components}}
-        self.delete_{{name}}(entity.id());
+        self.delete_{{name}}(id);
     {{/each}}
 {{else}}
     {{#if component_bookkeeping}}
-        if let Some(component_set) = entity.ecs._components.get(entity.id) {
+        if let Some(component_set) = ctx._components.get(id) {
             for component_id in component_set.iter() {
                 match component_id {
         {{#each components}}
-                    {{id}} => { self.delete_{{name}}(entity.id); }
+                    {{id}} => { self.delete_{{name}}(id); }
         {{/each}}
                     other => { panic!("No such component: {}", other); }
                 }
@@ -62,12 +62,16 @@ impl EcsActionDeletions {
         }
     {{else}}
         {{#each components}}
-        if entity.contains_{{name}}() {
-            self.delete_{{name}}(entity.id());
+        if ctx.contains_{{name}}(id) {
+            self.delete_{{name}}(id);
         }
         {{/each}}
     {{/if}}
 {{/if}}
+    }
+
+    fn entity_delete(&mut self, entity: EntityRef) {
+        self.entity_delete_by_id(entity.id(), entity.ecs());
     }
 }
 
@@ -392,6 +396,10 @@ impl EcsAction {
             ecs: &mut self.insertions,
             id: id,
         }
+    }
+
+    pub fn entity_delete_by_id(&mut self, id: EntityId, ctx: &EcsCtx) {
+        self.deletions.entity_delete_by_id(id, ctx);
     }
 
     pub fn entity_delete(&mut self, entity: EntityRef) {
