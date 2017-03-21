@@ -42,4 +42,7 @@ pub type FlagIdIter<'a> = EcsCtxEntitySetRange<'a>;
 pub type FlagIdIter<'a> = EcsCtxEntitySetIter<'a>;
 {{/if}}
 
+pub type EntitySet = EcsCtxEntitySet;
+pub type EntityMap<T> = EcsCtxEntityMap<T>;
+
 "#;
