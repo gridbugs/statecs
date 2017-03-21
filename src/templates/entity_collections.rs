@@ -44,5 +44,9 @@ pub type FlagIdIter<'a> = EcsCtxEntitySetIter<'a>;
 
 pub type EntitySet = EcsCtxEntitySet;
 pub type EntityMap<T> = EcsCtxEntityMap<T>;
+pub type EntitySetIter<'a> = EcsCtxEntitySetIter<'a>;
+pub type EntityMapIter<'a, T> = EcsCtxEntityMapIter<'a, T>;
+pub type EntityMapCopyIter<'a, T> = EcsCtxEntityMapCopyIter<'a, T>;
+pub type EntityMapKeys<'a, T> = EcsCtxEntityMapKeys<'a, T>;
 
 "#;
