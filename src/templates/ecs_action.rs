@@ -528,6 +528,9 @@ impl EcsAction {
     pub fn swap_negative_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapNegativeFlagIdIter<'a, 'b> {
         self.swaps.negative_id_iter_{{name}}(ecs)
     }
+    pub fn positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveFlagIdIter<'a, 'b> {
+        self.positive_id_iter_{{name}}(ecs)
+    }
     pub fn positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> PositiveFlagIdIter<'a, 'b> {
         PositiveFlagIdIter {
             insertions: self.id_iter_{{name}}(),
