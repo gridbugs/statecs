@@ -557,33 +557,33 @@ impl EcsAction {
 {{/each}}
 
 {{#each data_action_properties}}
-    fn insert_property_{{name}}(&mut self, data: {{type}}) -> Option<{{type}}> {
+    pub fn insert_property_{{name}}(&mut self, data: {{type}}) -> Option<{{type}}> {
         self.properties.insert_property_{{name}}(data)
     }
-    fn remove_property_{{name}}(&mut self) -> Option<{{type}}> {
+    pub fn remove_property_{{name}}(&mut self) -> Option<{{type}}> {
         self.properties.remove_property_{{name}}()
     }
-    fn get_property_{{name}}(&self) -> Option<&{{type}}> {
+    pub fn get_property_{{name}}(&self) -> Option<&{{type}}> {
         self.properties.get_property_{{name}}()
     }
-    fn contains_property_{{name}}(&self) -> bool {
+    pub fn contains_property_{{name}}(&self) -> bool {
         self.properties.contains_property_{{name}}()
     }
     {{#if copy}}
-    fn get_property_copy_{{name}}(&self) -> Option<{{type}}> {
+    pub fn get_property_copy_{{name}}(&self) -> Option<{{type}}> {
         self.properties.get_property_copy_{{name}}()
     }
     {{/if}}
 {{/each}}
 
 {{#each flag_action_properties}}
-    fn insert_property_{{name}}(&mut self) -> bool {
+    pub fn insert_property_{{name}}(&mut self) -> bool {
         self.properties.insert_property_{{name}}()
     }
-    fn remove_property_{{name}}(&mut self) -> bool {
+    pub fn remove_property_{{name}}(&mut self) -> bool {
         self.properties.remove_property_{{name}}()
     }
-    fn contains_property_{{name}}(&self) -> bool {
+    pub fn contains_property_{{name}}(&self) -> bool {
         self.properties.contains_property_{{name}}()
     }
 {{/each}}
