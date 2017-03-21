@@ -1,5 +1,5 @@
 pub const SERIALIZABLE_ECS_CTX: &'static str = r#"
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SerializableEcsCtx {
 {{#each data_components}}
     {{name}}: EcsCtxEntityMap<{{type}}>,
