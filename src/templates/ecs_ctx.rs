@@ -171,60 +171,151 @@ impl EcsCtx {
 {{/each}}
 
     fn commit_swaps(&mut self, swaps: &mut EcsActionSwaps) {
-{{#each components}}
+
+{{#if action_component_bookkeeping}}
+        for component_id in swaps._components.iter() {
+            match component_id {
+                {{#each components}}
+                {{id}} => {
+                    for (id_a, id_b) in swaps.apply_{{name}}.drain(..) {
+                        self.swap_{{name}}(id_a, id_b);
+                    }
+                }
+                {{/each}}
+                _ => { panic!("No such component {}", component_id); }
+            }
+        }
+{{else}}
+    {{#each components}}
         for (id_a, id_b) in swaps.apply_{{name}}.drain(..) {
             self.swap_{{name}}(id_a, id_b);
         }
-{{/each}}
+    {{/each}}
+{{/if}}
 
-        swaps.clear();
+        swaps.clear_lookup();
     }
 
     fn commit_deletions(&mut self, deletions: &mut EcsActionDeletions) {
-{{#each components}}
+{{#if action_component_bookkeeping}}
+        for component_id in deletions._components.iter() {
+            match component_id {
+                {{#each components}}
+                {{id}} => {
+                    for id in deletions.apply_{{name}}.drain(..) {
+                        self.remove_{{name}}(id);
+                    }
+                }
+                {{/each}}
+                _ => { panic!("No such component {}", component_id); }
+            }
+        }
+{{else}}
+    {{#each components}}
         for id in deletions.apply_{{name}}.drain(..) {
             self.remove_{{name}}(id);
         }
-{{/each}}
+    {{/each}}
+{{/if}}
 
-        deletions.clear();
+        deletions.clear_lookup();
     }
 
     fn commit_deletions_into(&mut self, deletions: &mut EcsActionDeletions, dest: &mut EcsAction) {
-{{#each data_components}}
+
+{{#if action_component_bookkeeping}}
+        for component_id in deletions._components.iter() {
+            match component_id {
+    {{#each data_components}}
+                {{id}} => {
+                    for id in deletions.apply_{{name}}.drain(..) {
+                        self.remove_{{name}}(id).map(|c| dest.insert_{{name}}(id, c));
+                    }
+                }
+    {{/each}}
+    {{#each cell_components}}
+                {{id}} => {
+                    for id in deletions.apply_{{name}}.drain(..) {
+                        self.remove_{{name}}(id).map(|c| dest.insert_{{name}}(id, c));
+                    }
+                }
+    {{/each}}
+    {{#each flag_components}}
+                {{id}} => {
+                    for id in deletions.apply_{{name}}.drain(..) {
+                        if self.remove_{{name}}(id) {
+                            dest.insert_{{name}}(id);
+                        }
+                    }
+                }
+    {{/each}}
+                _ => { panic!("No such component {}", component_id); }
+            }
+        }
+{{else}}
+    {{#each data_components}}
         for id in deletions.apply_{{name}}.drain(..) {
             self.remove_{{name}}(id).map(|c| dest.insert_{{name}}(id, c));
         }
-{{/each}}
-{{#each cell_components}}
+    {{/each}}
+    {{#each cell_components}}
         for id in deletions.apply_{{name}}.drain(..) {
             self.remove_{{name}}(id).map(|c| dest.insert_{{name}}(id, c));
         }
-{{/each}}
-{{#each flag_components}}
+    {{/each}}
+    {{#each flag_components}}
         for id in deletions.apply_{{name}}.drain(..) {
             if self.remove_{{name}}(id) {
                 dest.insert_{{name}}(id);
             }
         }
-{{/each}}
-
-        deletions.clear();
+    {{/each}}
+{{/if}}
+        deletions.clear_lookup();
     }
 
     fn commit_insertions(&mut self, insertions: &mut EcsActionInsertions) {
-{{#each data_components}}
-        commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
-{{/each}}
-{{#each cell_components}}
-        commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
-{{/each}}
-{{#if combine_flag_set}}
-        commit_set_insertion(&mut self._flags, &mut insertions._flags);
-{{else}}
-    {{#each flag_components}}
-        commit_set_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+{{#if action_component_bookkeeping}}
+        for component_id in insertions._components.iter() {
+            match component_id {
+    {{#each data_components}}
+                {{id}} => {
+                    commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+                }
     {{/each}}
+    {{#each cell_components}}
+                {{id}} => {
+                    commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+                }
+    {{/each}}
+    {{#unless combine_flag_set}}
+        {{#each flag_components}}
+                {{id}} => {
+                    commit_set_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+                }
+        {{/each}}
+    {{/unless}}
+                _ => { panic!("No such component {}", component_id); }
+            }
+        }
+    {{#if combine_flag_set}}
+        commit_set_insertion(&mut self._flags, &mut insertions._flags);
+    {{/if}}
+        insertions._components.clear();
+{{else}}
+    {{#each data_components}}
+            commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+    {{/each}}
+    {{#each cell_components}}
+            commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+    {{/each}}
+    {{#if combine_flag_set}}
+            commit_set_insertion(&mut self._flags, &mut insertions._flags);
+    {{else}}
+        {{#each flag_components}}
+            commit_set_insertion(&mut self.{{name}}, &mut insertions.{{name}});
+        {{/each}}
+    {{/if}}
 {{/if}}
     }
 

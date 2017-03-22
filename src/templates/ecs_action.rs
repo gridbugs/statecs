@@ -6,6 +6,9 @@ struct EcsActionDeletions {
     apply_{{name}}: Vec<EntityId>,
 {{/each}}
     _empty: bool,
+{{#if action_component_bookkeeping}}
+    _components: ComponentSet,
+{{/if}}
 }
 
 impl EcsActionDeletions {
@@ -16,16 +19,30 @@ impl EcsActionDeletions {
             apply_{{name}}: Vec::new(),
 {{/each}}
             _empty: true,
+{{#if action_component_bookkeeping}}
+            _components: ComponentSet::new(),
+{{/if}}
         }
     }
 
     fn clear(&mut self) {
 {{#each components}}
-        self.lookup_{{name}}.clear();
         self.apply_{{name}}.clear();
 {{/each}}
-        self._empty = true;
+        self.clear_lookup();
     }
+
+    fn clear_lookup(&mut self) {
+{{#each components}}
+        self.lookup_{{name}}.clear();
+{{/each}}
+        self._empty = true;
+
+{{#if action_component_bookkeeping}}
+        self._components.clear();
+{{/if}}
+    }
+
 
     fn is_empty(&self) -> bool { self._empty }
 
@@ -34,6 +51,9 @@ impl EcsActionDeletions {
         self._empty = false;
         self.apply_{{name}}.push(id);
         self.lookup_{{name}}.insert(id)
+    {{#if action_component_bookkeeping}}
+        self._components.insert_{{name}}();
+    {{/if}}
     }
     fn iter_{{name}}(&self) -> DeletionIdIter {
         DeletionIdIter(self.apply_{{name}}.iter())
@@ -89,6 +109,9 @@ struct EcsActionSwaps {
     apply_{{name}}: Vec<(EntityId, EntityId)>,
 {{/each}}
     _empty: bool,
+{{#if action_component_bookkeeping}}
+    _components: ComponentSet,
+{{/if}}
 }
 
 impl EcsActionSwaps {
@@ -99,15 +122,28 @@ impl EcsActionSwaps {
             apply_{{name}}: Vec::new(),
 {{/each}}
             _empty: true,
+{{#if action_component_bookkeeping}}
+            _components: ComponentSet::new(),
+{{/if}}
         }
     }
 
     fn clear(&mut self) {
 {{#each components}}
-        self.lookup_{{name}}.clear();
         self.apply_{{name}}.clear();
 {{/each}}
+        self.clear_lookup();
+    }
+
+    fn clear_lookup(&mut self) {
+{{#each components}}
+        self.lookup_{{name}}.clear();
+{{/each}}
         self._empty = true;
+
+{{#if action_component_bookkeeping}}
+        self._components.clear();
+{{/if}}
     }
 
     fn is_empty(&self) -> bool { self._empty }
@@ -124,6 +160,9 @@ impl EcsActionSwaps {
         self.apply_{{name}}.push((id_a, id_b));
 
         self._empty = false;
+    {{#if action_component_bookkeeping}}
+        self._components.insert_{{name}};
+    {{/if}}
     }
     fn will_swap_{{name}}(&self, id: EntityId) -> Option<EntityId> {
         self.lookup_{{name}}.get(id).map(|r| *r)
@@ -372,6 +411,9 @@ pub struct EcsActionInsertions {
     {{name}}: EcsActionEntitySet,
     {{/each}}
 {{/if}}
+{{#if action_component_bookkeeping}}
+    _components: ComponentSet,
+{{/if}}
 }
 
 impl EcsActionInsertions {
@@ -391,6 +433,9 @@ impl EcsActionInsertions {
     {{#each flag_components}}
             {{name}}: EcsActionEntitySet::new(),
     {{/each}}
+{{/if}}
+{{#if action_component_bookkeeping}}
+            _components: ComponentSet::new(),
 {{/if}}
         }
     }
@@ -433,19 +478,42 @@ impl EcsActionInsertions {
 {{/each}}
 
     pub fn clear(&mut self) {
-{{#each data_components}}
-        self.{{name}}.clear();
-{{/each}}
-{{#each cell_components}}
-        self.{{name}}.clear();
-{{/each}}
-{{#each flag_components}}
-    {{#if ../combine_flag_set}}
+
+{{#if action_component_bookkeeping}}
+    for component_id in self._components.iter() {
+        match component_id {
+    {{#each data_components}}
+            {{id}} => { self.{{name}}.clear(); }
+    {{/each}}
+    {{#each cell_components}}
+            {{id}} => { self.{{name}}.clear(); }
+    {{/each}}
+    {{#unless ../combine_flag_set}}
+        {{#each flag_components}}
+            {{id}} => { self.{{name}}.clear(); }
+        {{/each}}
+    {{/unless}}
+            _ => { panic!("No such component {}", component_id); }
+        }
+    }
+    {{#if combine_flag_set}}
         self._flags.clear();
-    {{else}}
-        self.{{name}}.clear();
     {{/if}}
-{{/each}}
+{{else}}
+    {{#each data_components}}
+        self.{{name}}.clear();
+    {{/each}}
+    {{#each cell_components}}
+        self.{{name}}.clear();
+    {{/each}}
+    {{#each flag_components}}
+        {{#if ../combine_flag_set}}
+        self._flags.clear();
+        {{else}}
+        self.{{name}}.clear();
+        {{/if}}
+    {{/each}}
+{{/if}}
     }
 
     pub fn entity(&self, id: EntityId) -> ActionInsertionEntityRef {
@@ -495,6 +563,9 @@ impl EcsMut for EcsActionInsertions {
 {{#each data_components}}
     fn insert_{{name}}(&mut self, id: EntityId, data: {{type}}) -> Option<{{type}}> {
         self.{{name}}.insert(id, data)
+    {{#if action_component_bookkeeping}}
+        self._components.insert_{{name}}();
+    {{/if}}
     }
     fn remove_{{name}}(&mut self, id: EntityId) -> Option<{{type}}> {
         self.{{name}}.remove(id)
@@ -506,6 +577,9 @@ impl EcsMut for EcsActionInsertions {
 {{#each cell_components}}
     fn bare_insert_{{name}}(&mut self, id: EntityId, data: RefCell<{{type}}>) -> Option<RefCell<{{type}}>> {
         self.{{name}}.insert(id, data)
+    {{#if action_component_bookkeeping}}
+        self._components.insert_{{name}}();
+    {{/if}}
     }
     fn bare_remove_{{name}}(&mut self, id: EntityId) -> Option<RefCell<{{type}}>> {
         self.{{name}}.remove(id)
