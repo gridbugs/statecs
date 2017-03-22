@@ -80,6 +80,7 @@ struct TemplateData {
     pub action_property_bookkeeping: bool,
     pub ecs_ctx_hash_collections: bool,
     pub ecs_action_hash_collections: bool,
+    pub fnv_hasher: bool,
     pub entity_bits: u32,
     pub component_bits: u32,
     pub entity_mask: u64,
@@ -118,6 +119,7 @@ impl TemplateData {
             unchecked_entity_delete: config.unchecked_entity_delete,
             ecs_ctx_hash_collections: config.ecs_ctx_hash_collections,
             ecs_action_hash_collections: config.ecs_action_hash_collections,
+            fnv_hasher: config.fnv_hasher,
             component_bits: component_bits,
             entity_bits: entity_bits,
             entity_mask: entity_mask,
@@ -219,6 +221,11 @@ impl TemplateData {
             for import in IMPORTS_EXPERIMENTAL.iter() {
                 data.imports.insert(import.to_string());
             }
+        }
+
+        if config.fnv_hasher {
+            data.imports.insert("fnv::FnvHashMap".to_string());
+            data.imports.insert("fnv::FnvHashSet".to_string());
         }
 
         data

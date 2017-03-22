@@ -1,10 +1,17 @@
 pub const ENTITY_HASH_SET: &'static str = r#"
+{{#if fnv_hasher}}
+type InnerHashSet = FnvHashSet<EntityId>;
+{{else}}
+type InnerHashSet = HashSet<EntityId>;
+{{/if}}
+
 #[derive(Clone, Serialize, Deserialize)]
-pub struct EntityHashSet(HashSet<EntityId>);
+pub struct EntityHashSet(InnerHashSet);
+
 
 impl EntityHashSet {
     pub fn new() -> Self {
-        EntityHashSet(HashSet::new())
+        EntityHashSet(InnerHashSet::default())
     }
 
     pub fn insert(&mut self, entity: EntityId) -> bool {

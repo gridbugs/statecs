@@ -8,6 +8,7 @@ pub struct Config {
     pub unchecked_entity_delete: bool,
     pub ecs_ctx_hash_collections: bool,
     pub ecs_action_hash_collections: bool,
+    pub fnv_hasher: bool,
 }
 
 impl Config {
@@ -21,6 +22,7 @@ impl Config {
             unchecked_entity_delete: true,
             ecs_ctx_hash_collections: false,
             ecs_action_hash_collections: false,
+            fnv_hasher: false,
         }
     }
 }

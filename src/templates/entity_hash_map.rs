@@ -1,10 +1,17 @@
 pub const ENTITY_HASH_MAP: &'static str = r#"
+
+{{#if fnv_hasher}}
+type InnerHashMap<T> = FnvHashMap<EntityId, T>;
+{{else}}
+type InnerHashMap<T> = HashMap<EntityId, T>;
+{{/if}}
+
 #[derive(Clone, Serialize, Deserialize)]
-pub struct EntityHashMap<T>(HashMap<EntityId, T>);
+pub struct EntityHashMap<T>(InnerHashMap<T>);
 
 impl<T> EntityHashMap<T> {
     pub fn new() -> Self {
-        EntityHashMap(HashMap::new())
+        EntityHashMap(InnerHashMap::default())
     }
 
     pub fn insert(&mut self, entity: EntityId, value: T) -> Option<T> {
