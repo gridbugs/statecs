@@ -2,44 +2,60 @@ pub const ENTITY_COLLECTIONS: &'static str = r#"
 
 {{#if ecs_ctx_hash_collections}}
 
-type EcsCtxEntitySet = EntityHashSet;
-type EcsCtxEntityMap<T> = EntityHashMap<T>;
-type EcsCtxEntitySetIter<'a> = EntityHashSetIter<'a>;
-type EcsCtxEntityMapIter<'a, T> = EntityHashMapIter<'a, T>;
-type EcsCtxEntityMapCopyIter<'a, T> = EntityHashMapCopyIter<'a, T>;
-type EcsCtxEntityMapKeys<'a, T> = EntityHashMapKeys<'a, T>;
+pub type EcsCtxEntitySet = EntityHashSet;
+pub type EcsCtxEntityMap<T> = EntityHashMap<T>;
+pub type EcsCtxEntitySetIter<'a> = EntityHashSetIter<'a>;
+pub type EcsCtxEntityMapIter<'a, T> = EntityHashMapIter<'a, T>;
+pub type EcsCtxEntityMapCopyIter<'a, T> = EntityHashMapCopyIter<'a, T>;
+pub type EcsCtxEntityMapKeys<'a, T> = EntityHashMapKeys<'a, T>;
+
+pub type EcsCtxFlagIdIter<'a> = EcsCtxEntitySetIter<'a>;
 
 {{else}}
 
-type EcsCtxEntitySet = EntityBTreeSet;
-type EcsCtxEntityMap<T> = EntityBTreeMap<T>;
-type EcsCtxEntitySetIter<'a> = EntityBTreeSetIter<'a>;
-type EcsCtxEntityMapIter<'a, T> = EntityBTreeMapIter<'a, T>;
-type EcsCtxEntityMapCopyIter<'a, T> = EntityBTreeMapCopyIter<'a, T>;
-type EcsCtxEntityMapKeys<'a, T> = EntityBTreeMapKeys<'a, T>;
+pub type EcsCtxEntitySet = EntityBTreeSet;
+pub type EcsCtxEntityMap<T> = EntityBTreeMap<T>;
+pub type EcsCtxEntitySetIter<'a> = EntityBTreeSetIter<'a>;
+pub type EcsCtxEntityMapIter<'a, T> = EntityBTreeMapIter<'a, T>;
+pub type EcsCtxEntityMapCopyIter<'a, T> = EntityBTreeMapCopyIter<'a, T>;
+pub type EcsCtxEntityMapKeys<'a, T> = EntityBTreeMapKeys<'a, T>;
+
     {{#if combine_flag_set}}
-type EcsCtxEntitySetRange<'a> = EntityBTreeSetRange<'a>;
+pub type EcsCtxEntitySetRange<'a> = EntityBTreeSetRange<'a>;
+pub type EcsCtxFlagIdIter<'a> = EcsCtxEntitySetRange<'a>;
+    {{else}}
+pub type EcsCtxFlagIdIter<'a> = EcsCtxEntitySetIter<'a>;
     {{/if}}
+
 {{/if}}
 
 {{#if ecs_action_hash_collections}}
 
-type EcsActionEntitySet = EntityHashSet;
-type EcsActionEntityMap<T> = EntityHashMap<T>;
-type EcsActionEntityMapIter<'a, T> = EntityHashMapIter<'a, T>;
+pub type EcsActionEntitySet = EntityHashSet;
+pub type EcsActionEntityMap<T> = EntityHashMap<T>;
+pub type EcsActionEntitySetIter<'a> = EntityHashSetIter<'a>;
+pub type EcsActionEntityMapIter<'a, T> = EntityHashMapIter<'a, T>;
+pub type EcsActionEntityMapCopyIter<'a, T> = EntityHashMapCopyIter<'a, T>;
+pub type EcsActionEntityMapKeys<'a, T> = EntityHashMapKeys<'a, T>;
+
+pub type EcsActionFlagIdIter<'a> = EcsActionEntitySetIter<'a>;
 
 {{else}}
 
-type EcsActionEntitySet = EntityBTreeSet;
-type EcsActionEntityMap<T> = EntityBTreeMap<T>;
-type EcsActionEntityMapIter<'a, T> = EntityBTreeMapIter<'a, T>;
+pub type EcsActionEntitySet = EntityBTreeSet;
+pub type EcsActionEntityMap<T> = EntityBTreeMap<T>;
+pub type EcsActionEntitySetIter<'a> = EntityBTreeSetIter<'a>;
+pub type EcsActionEntityMapIter<'a, T> = EntityBTreeMapIter<'a, T>;
+pub type EcsActionEntityMapCopyIter<'a, T> = EntityBTreeMapCopyIter<'a, T>;
+pub type EcsActionEntityMapKeys<'a, T> = EntityBTreeMapKeys<'a, T>;
 
-{{/if}}
+    {{#if combine_flag_set}}
+pub type EcsActionEntitySetRange<'a> = EntityBTreeSetRange<'a>;
+pub type EcsActionFlagIdIter<'a> = EcsActionEntitySetRange<'a>;
+    {{else}}
+pub type EcsActionFlagIdIter<'a> = EcsActionEntitySetIter<'a>;
+    {{/if}}
 
-{{#if combine_flag_set}}
-pub type FlagIdIter<'a> = EcsCtxEntitySetRange<'a>;
-{{else}}
-pub type FlagIdIter<'a> = EcsCtxEntitySetIter<'a>;
 {{/if}}
 
 pub type EntitySet = EcsCtxEntitySet;
@@ -49,4 +65,31 @@ pub type EntityMapIter<'a, T> = EcsCtxEntityMapIter<'a, T>;
 pub type EntityMapCopyIter<'a, T> = EcsCtxEntityMapCopyIter<'a, T>;
 pub type EntityMapKeys<'a, T> = EcsCtxEntityMapKeys<'a, T>;
 
+fn commit_map_insertion<T>(ctx: &mut EcsCtxEntityMap<T>, action: &mut EcsActionEntityMap<T>) {
+{{#if ecs_action_hash_collections}}
+    for (id, value) in action.drain() {
+        ctx.insert(id, value);
+    }
+{{else}}
+    {{#if ecs_ctx_hash_collections}}
+    unimplemented!()
+    {{else}}
+    ctx.append(action);
+    {{/if}}
+{{/if}}
+}
+
+fn commit_set_insertion(ctx: &mut EcsCtxEntitySet, action: &mut EcsActionEntitySet) {
+{{#if ecs_action_hash_collections}}
+    for id in action.drain() {
+        ctx.insert(id);
+    }
+{{else}}
+    {{#if ecs_ctx_hash_collections}}
+    unimplemented!()
+    {{else}}
+    ctx.append(action);
+    {{/if}}
+{{/if}}
+}
 "#;

@@ -153,7 +153,7 @@ impl EcsCtx {
     {{/if}}
     }
 
-    pub fn id_iter_{{name}}(&self) -> FlagIdIter {
+    pub fn id_iter_{{name}}(&self) -> EcsCtxFlagIdIter {
     {{#if ../combine_flag_set}}
         let start = Bound::Included({{mask}});
         let end = Bound::Included({{mask}} | {{../entity_mask}});
@@ -163,6 +163,10 @@ impl EcsCtx {
         self.{{name}}.iter()
     {{/if}}
     }
+    pub fn iter_{{name}}(&self) -> EcsCtxFlagIdIter {
+        self.id_iter_{{name}}()
+    }
+
 
 {{/each}}
 
@@ -208,18 +212,18 @@ impl EcsCtx {
         deletions.clear();
     }
 
-    fn commit_insertions(&mut self, insertions: &mut EcsCtx) {
+    fn commit_insertions(&mut self, insertions: &mut EcsActionInsertions) {
 {{#each data_components}}
-        self.{{name}}.append(&mut insertions.{{name}});
+        commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
 {{/each}}
 {{#each cell_components}}
-        self.{{name}}.append(&mut insertions.{{name}});
+        commit_map_insertion(&mut self.{{name}}, &mut insertions.{{name}});
 {{/each}}
 {{#if combine_flag_set}}
-        self._flags.append(&mut insertions._flags);
+        commit_set_insertion(&mut self._flags, &mut insertions._flags);
 {{else}}
     {{#each flag_components}}
-        self.{{name}}.append(&mut insertions.{{name}});
+        commit_set_insertion(&mut self.{{name}}, &mut insertions.{{name}});
     {{/each}}
 {{/if}}
     }

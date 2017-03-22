@@ -43,14 +43,14 @@ impl EcsActionDeletions {
     }
 {{/each}}
 
-    fn entity_delete_by_id(&mut self, id: EntityId, ctx: &EcsCtx) {
+    fn entity_delete_by_id(&mut self, id: EntityId, _ctx: &EcsCtx) {
 {{#if unchecked_entity_delete}}
     {{#each components}}
         self.delete_{{name}}(id);
     {{/each}}
 {{else}}
     {{#if component_bookkeeping}}
-        if let Some(component_set) = ctx._components.get(id) {
+        if let Some(component_set) = _ctx._components.get(id) {
             for component_id in component_set.iter() {
                 match component_id {
         {{#each components}}
@@ -62,7 +62,7 @@ impl EcsActionDeletions {
         }
     {{else}}
         {{#each components}}
-        if ctx.contains_{{name}}(id) {
+        if _ctx.contains_{{name}}(id) {
             self.delete_{{name}}(id);
         }
         {{/each}}
@@ -291,7 +291,7 @@ impl<'a, 'b, T: 'b> Iterator for SwapNegativeIdIter<'a, 'b, T> {
 }
 
 pub struct PositiveIter<'a: 'b, 'b, T: 'a + 'b> {
-    insertions: EcsCtxEntityMapIter<'a, T>,
+    insertions: EcsActionEntityMapIter<'a, T>,
     swaps: SwapPositiveIter<'a, 'b, T>,
 }
 impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIter<'a, 'b, T> {
@@ -302,7 +302,7 @@ impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIter<'a, 'b, T> {
 }
 
 pub struct PositiveIdIter<'a: 'b, 'b, T: 'a + 'b> {
-    insertions: EcsCtxEntityMapKeys<'a, T>,
+    insertions: EcsActionEntityMapKeys<'a, T>,
     swaps: SwapPositiveIdIter<'a, 'b, T>,
 }
 impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIdIter<'a, 'b, T> {
@@ -313,7 +313,7 @@ impl<'a: 'b, 'b, T: 'a + 'b> Iterator for PositiveIdIter<'a, 'b, T> {
 }
 
 pub struct PositiveCopyIter<'a: 'b, 'b, T: 'a + 'b + Copy> {
-    insertions: EcsCtxEntityMapCopyIter<'a, T>,
+    insertions: EcsActionEntityMapCopyIter<'a, T>,
     swaps: SwapPositiveCopyIter<'a, 'b, T>,
 }
 impl<'a: 'b, 'b, T: 'a + 'b + Copy> Iterator for PositiveCopyIter<'a, 'b, T> {
@@ -324,7 +324,7 @@ impl<'a: 'b, 'b, T: 'a + 'b + Copy> Iterator for PositiveCopyIter<'a, 'b, T> {
 }
 
 pub struct PositiveFlagIdIter<'a: 'b, 'b> {
-    insertions: FlagIdIter<'a>,
+    insertions: EcsActionFlagIdIter<'a>,
     swaps: SwapPositiveFlagIdIter<'a, 'b>,
 }
 impl<'a: 'b, 'b> Iterator for PositiveFlagIdIter<'a, 'b> {
@@ -356,8 +356,198 @@ impl<'a: 'b, 'b> Iterator for NegativeFlagIdIter<'a, 'b> {
     }
 }
 
+pub struct EcsActionInsertions {
+{{#each data_components}}
+    {{name}}: EcsActionEntityMap<{{type}}>,
+{{/each}}
+
+{{#each cell_components}}
+    {{name}}: EcsActionEntityMap<RefCell<{{type}}>>,
+{{/each}}
+
+{{#if combine_flag_set}}
+    _flags: EcsActionEntitySet,
+{{else}}
+    {{#each flag_components}}
+    {{name}}: EcsActionEntitySet,
+    {{/each}}
+{{/if}}
+}
+
+impl EcsActionInsertions {
+    pub fn new() -> Self {
+        EcsActionInsertions {
+{{#each data_components}}
+            {{name}}: EcsActionEntityMap::new(),
+{{/each}}
+
+{{#each cell_components}}
+            {{name}}: EcsActionEntityMap::new(),
+{{/each}}
+
+{{#if combine_flag_set}}
+            _flags: EcsActionEntitySet::new(),
+{{else}}
+    {{#each flag_components}}
+            {{name}}: EcsActionEntitySet::new(),
+    {{/each}}
+{{/if}}
+        }
+    }
+
+{{#each data_components}}
+    pub fn id_iter_{{name}}(&self) -> EcsActionEntityMapKeys<{{type}}> {
+        self.{{name}}.keys()
+    }
+    pub fn iter_{{name}}(&self) -> EcsActionEntityMapIter<{{type}}> {
+        self.{{name}}.iter()
+    }
+    {{#if copy}}
+    pub fn copy_iter_{{name}}(&self) -> EcsActionEntityMapCopyIter<{{type}}> {
+        self.{{name}}.copy_iter()
+    }
+    {{/if}}
+{{/each}}
+{{#each cell_components}}
+    pub fn id_iter_{{name}}(&self) -> EcsActionEntityMapKeys<RefCell<{{type}}>> {
+        self.{{name}}.keys()
+    }
+    pub fn iter_{{name}}(&self) -> EcsActionEntityMapIter<RefCell<{{type}}>> {
+        self.{{name}}.iter()
+    }
+{{/each}}
+{{#each flag_components}}
+    pub fn id_iter_{{name}}(&self) -> EcsActionFlagIdIter {
+    {{#if ../combine_flag_set}}
+        let start = Bound::Included({{mask}});
+        let end = Bound::Included({{mask}} | {{../entity_mask}});
+
+        self._flags.range((start, end))
+    {{else}}
+        self.{{name}}.iter()
+    {{/if}}
+    }
+    pub fn iter_{{name}}(&self) -> EcsActionFlagIdIter {
+        self.id_iter_{{name}}()
+    }
+{{/each}}
+
+    pub fn clear(&mut self) {
+{{#each data_components}}
+        self.{{name}}.clear();
+{{/each}}
+{{#each cell_components}}
+        self.{{name}}.clear();
+{{/each}}
+{{#each flag_components}}
+    {{#if ../combine_flag_set}}
+        self._flags.clear();
+    {{else}}
+        self.{{name}}.clear();
+    {{/if}}
+{{/each}}
+    }
+
+    pub fn entity(&self, id: EntityId) -> ActionInsertionEntityRef {
+        ActionInsertionEntityRef {
+            id: id,
+            insertions: self,
+        }
+    }
+
+    pub fn entity_mut(&mut self, id: EntityId) -> ActionInsertionEntityRefMut {
+        ActionInsertionEntityRefMut {
+            id: id,
+            insertions: self,
+        }
+    }
+}
+
+impl Ecs for EcsActionInsertions {
+{{#each data_components}}
+    fn get_{{name}}(&self, id: EntityId) -> Option<&{{type}}> {
+        self.{{name}}.get(id)
+    }
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.{{name}}.contains_key(id)
+    }
+{{/each}}
+{{#each cell_components}}
+    fn bare_get_{{name}}(&self, id: EntityId) -> Option<&RefCell<{{type}}>> {
+        self.{{name}}.get(id)
+    }
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+        self.{{name}}.contains_key(id)
+    }
+{{/each}}
+{{#each flag_components}}
+    fn contains_{{name}}(&self, id: EntityId) -> bool {
+    {{#if ../combine_flag_set}}
+        self._flags.contains(Self::flag_key_{{name}}(id))
+    {{else}}
+        self.{{name}}.contains(id)
+    {{/if}}
+    }
+{{/each}}
+}
+
+impl EcsMut for EcsActionInsertions {
+{{#each data_components}}
+    fn insert_{{name}}(&mut self, id: EntityId, data: {{type}}) -> Option<{{type}}> {
+        self.{{name}}.insert(id, data)
+    }
+    fn remove_{{name}}(&mut self, id: EntityId) -> Option<{{type}}> {
+        self.{{name}}.remove(id)
+    }
+    fn get_mut_{{name}}(&mut self, id: EntityId) -> Option<&mut {{type}}> {
+        self.{{name}}.get_mut(id)
+    }
+{{/each}}
+{{#each cell_components}}
+    fn bare_insert_{{name}}(&mut self, id: EntityId, data: RefCell<{{type}}>) -> Option<RefCell<{{type}}>> {
+        self.{{name}}.insert(id, data)
+    }
+    fn bare_remove_{{name}}(&mut self, id: EntityId) -> Option<RefCell<{{type}}>> {
+        self.{{name}}.remove(id)
+    }
+{{/each}}
+{{#each flag_components}}
+    fn insert_{{name}}(&mut self, id: EntityId) -> bool {
+        self.{{name}}.insert(id)
+    }
+    fn remove_{{name}}(&mut self, id: EntityId) -> bool {
+        self.{{name}}.remove(id)
+    }
+{{/each}}
+}
+
+#[derive(Clone, Copy)]
+pub struct ActionInsertionEntityRef<'a> {
+    id: EntityId,
+    insertions: &'a EcsActionInsertions,
+}
+
+impl<'a> Entity<'a> for ActionInsertionEntityRef<'a> {
+    type Ecs = EcsActionInsertions;
+    fn ecs(self) -> &'a Self::Ecs { self.insertions }
+    fn id(self) -> EntityId { self.id }
+}
+
+pub struct ActionInsertionEntityRefMut<'a> {
+    id: EntityId,
+    insertions: &'a mut EcsActionInsertions,
+}
+
+impl<'a> EntityMut for ActionInsertionEntityRefMut<'a> {
+    type Ecs = EcsActionInsertions;
+
+    fn ecs(&self) -> &Self::Ecs { self.insertions }
+    fn ecs_mut(&mut self) -> &mut Self::Ecs { self.insertions }
+    fn id(&self) -> EntityId { self.id }
+}
+
 pub struct EcsAction {
-    insertions: EcsCtx,
+    insertions: EcsActionInsertions,
     deletions: EcsActionDeletions,
     swaps: EcsActionSwaps,
     properties: ActionProperties,
@@ -366,7 +556,7 @@ pub struct EcsAction {
 impl EcsAction {
     pub fn new() -> Self {
         EcsAction {
-            insertions: EcsCtx::new(),
+            insertions: EcsActionInsertions::new(),
             deletions: EcsActionDeletions::new(),
             swaps: EcsActionSwaps::new(),
             properties: ActionProperties::new(),
@@ -384,18 +574,12 @@ impl EcsAction {
     pub fn has_swaps(&self) -> bool { !self.swaps.is_empty() }
     pub fn is_pure(&self) -> bool { self.swaps.is_empty() && self.deletions.is_empty() }
 
-    pub fn entity(&self, id: EntityId) -> EntityRef {
-        EntityRef {
-            ecs: &self.insertions,
-            id: id,
-        }
+    pub fn entity(&self, id: EntityId) -> ActionInsertionEntityRef {
+        self.insertions.entity(id)
     }
 
-    pub fn entity_mut(&mut self, id: EntityId) -> EntityRefMut {
-        EntityRefMut {
-            ecs: &mut self.insertions,
-            id: id,
-        }
+    pub fn entity_mut(&mut self, id: EntityId) -> ActionInsertionEntityRefMut {
+        self.insertions.entity_mut(id)
     }
 
     pub fn entity_delete_by_id(&mut self, id: EntityId, ctx: &EcsCtx) {
@@ -433,14 +617,14 @@ impl EcsAction {
 {{/each}}
 
 {{#each data_components}}
-    pub fn id_iter_{{name}}(&self) -> EcsCtxEntityMapKeys<{{type}}> {
+    pub fn id_iter_{{name}}(&self) -> EcsActionEntityMapKeys<{{type}}> {
         self.insertions.id_iter_{{name}}()
     }
-    pub fn iter_{{name}}(&self) -> EcsCtxEntityMapIter<{{type}}> {
+    pub fn iter_{{name}}(&self) -> EcsActionEntityMapIter<{{type}}> {
         self.insertions.iter_{{name}}()
     }
     {{#if copy}}
-    pub fn copy_iter_{{name}}(&self) -> EcsCtxEntityMapCopyIter<{{type}}> {
+    pub fn copy_iter_{{name}}(&self) -> EcsActionEntityMapCopyIter<{{type}}> {
         self.insertions.copy_iter_{{name}}()
     }
     {{/if}}
@@ -489,10 +673,10 @@ impl EcsAction {
     }
 {{/each}}
 {{#each cell_components}}
-    pub fn id_iter_{{name}}(&self) -> EcsCtxEntityMapKeys<RefCell<{{type}}>> {
+    pub fn id_iter_{{name}}(&self) -> EcsActionEntityMapKeys<RefCell<{{type}}>> {
         self.insertions.id_iter_{{name}}()
     }
-    pub fn iter_{{name}}(&self) -> EcsCtxEntityMapIter<RefCell<{{type}}>> {
+    pub fn iter_{{name}}(&self) -> EcsActionEntityMapIter<RefCell<{{type}}>> {
         self.insertions.iter_{{name}}()
     }
     pub fn swap_positive_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveIter<'a, 'b, RefCell<{{type}}>> {
@@ -527,7 +711,7 @@ impl EcsAction {
     }
 {{/each}}
 {{#each flag_components}}
-    pub fn id_iter_{{name}}(&self) -> FlagIdIter {
+    pub fn id_iter_{{name}}(&self) -> EcsActionFlagIdIter {
         self.insertions.id_iter_{{name}}()
     }
     pub fn swap_positive_id_iter_{{name}}<'a, 'b>(&'a self, ecs: &'b EcsCtx) -> SwapPositiveFlagIdIter<'a, 'b> {

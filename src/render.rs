@@ -110,7 +110,7 @@ impl TemplateData {
             num_action_properties: model.num_action_properties(),
             action_property_bitfield_size: model.action_bitfield_size(),
             single_component_bitfield: config.single_component_bitfield && model.bitfield_size() == 1,
-            combine_flag_set: config.combine_flag_set && !config.ecs_ctx_hash_collections,
+            combine_flag_set: config.combine_flag_set && !config.ecs_ctx_hash_collections && !config.ecs_action_hash_collections,
             component_bookkeeping: config.component_bookkeeping && !config.unchecked_entity_delete,
             action_property_bookkeeping: config.action_property_bookkeeping,
             unchecked_entity_delete: config.unchecked_entity_delete,
