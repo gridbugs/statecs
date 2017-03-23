@@ -48,7 +48,7 @@ impl EcsActionDeletions {
 
 {{#each components}}
     fn delete_{{name}}(&mut self, id: EntityId) -> bool {
-    {{#if action_component_bookkeeping}}
+    {{#if ../action_component_bookkeeping}}
         self._components.insert_{{name}}();
     {{/if}}
         self._empty = false;
