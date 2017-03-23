@@ -1,6 +1,6 @@
 pub const COMPONENT_SET: &'static str = r#"
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentSet {
 {{#if single_component_bitfield}}
     bitfield: u64,

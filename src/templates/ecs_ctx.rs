@@ -275,6 +275,7 @@ impl EcsCtx {
     }
 
     fn commit_insertions(&mut self, insertions: &mut EcsActionInsertions) {
+
 {{#if action_component_bookkeeping}}
         for component_id in insertions._components.iter() {
             match component_id {

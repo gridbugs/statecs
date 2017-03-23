@@ -48,12 +48,12 @@ impl EcsActionDeletions {
 
 {{#each components}}
     fn delete_{{name}}(&mut self, id: EntityId) -> bool {
-        self._empty = false;
-        self.apply_{{name}}.push(id);
-        self.lookup_{{name}}.insert(id)
     {{#if action_component_bookkeeping}}
         self._components.insert_{{name}}();
     {{/if}}
+        self._empty = false;
+        self.apply_{{name}}.push(id);
+        self.lookup_{{name}}.insert(id)
     }
     fn iter_{{name}}(&self) -> DeletionIdIter {
         DeletionIdIter(self.apply_{{name}}.iter())
@@ -160,8 +160,8 @@ impl EcsActionSwaps {
         self.apply_{{name}}.push((id_a, id_b));
 
         self._empty = false;
-    {{#if action_component_bookkeeping}}
-        self._components.insert_{{name}};
+    {{#if ../action_component_bookkeeping}}
+        self._components.insert_{{name}}();
     {{/if}}
     }
     fn will_swap_{{name}}(&self, id: EntityId) -> Option<EntityId> {
@@ -562,10 +562,10 @@ impl Ecs for EcsActionInsertions {
 impl EcsMut for EcsActionInsertions {
 {{#each data_components}}
     fn insert_{{name}}(&mut self, id: EntityId, data: {{type}}) -> Option<{{type}}> {
-        self.{{name}}.insert(id, data)
-    {{#if action_component_bookkeeping}}
+    {{#if ../action_component_bookkeeping}}
         self._components.insert_{{name}}();
     {{/if}}
+        self.{{name}}.insert(id, data)
     }
     fn remove_{{name}}(&mut self, id: EntityId) -> Option<{{type}}> {
         self.{{name}}.remove(id)
@@ -576,10 +576,10 @@ impl EcsMut for EcsActionInsertions {
 {{/each}}
 {{#each cell_components}}
     fn bare_insert_{{name}}(&mut self, id: EntityId, data: RefCell<{{type}}>) -> Option<RefCell<{{type}}>> {
-        self.{{name}}.insert(id, data)
-    {{#if action_component_bookkeeping}}
+    {{#if ../action_component_bookkeeping}}
         self._components.insert_{{name}}();
     {{/if}}
+        self.{{name}}.insert(id, data)
     }
     fn bare_remove_{{name}}(&mut self, id: EntityId) -> Option<RefCell<{{type}}>> {
         self.{{name}}.remove(id)
@@ -587,10 +587,22 @@ impl EcsMut for EcsActionInsertions {
 {{/each}}
 {{#each flag_components}}
     fn insert_{{name}}(&mut self, id: EntityId) -> bool {
+    {{#if ../action_component_bookkeeping}}
+        self._components.insert_{{name}}();
+    {{/if}}
+    {{#if ../combine_flag_set}}
+        self._flags.insert(EcsCtx::flag_key_{{name}}(id))
+    {{else}}
         self.{{name}}.insert(id)
+    {{/if}}
     }
     fn remove_{{name}}(&mut self, id: EntityId) -> bool {
+    {{#if ../combine_flag_set}}
+        self._flags.remove(EcsCtx::flag_key_{{name}}(id))
+    {{else}}
         self.{{name}}.remove(id)
+    {{/if}}
+
     }
 {{/each}}
 }
