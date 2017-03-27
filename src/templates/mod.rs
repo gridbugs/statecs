@@ -1,4 +1,5 @@
-mod header;
+mod header_core;
+mod header_content;
 mod component_set;
 mod action_property_set;
 mod entity_btree_set;
@@ -18,8 +19,10 @@ mod entity_mut;
 mod entity_ref;
 mod entity_ref_mut;
 mod entity_ref_post_action;
+mod commit_insertions;
 
-pub use self::header::*;
+pub use self::header_core::*;
+pub use self::header_content::*;
 pub use self::component_set::*;
 pub use self::action_property_set::*;
 pub use self::entity_btree_set::*;
@@ -39,3 +42,4 @@ pub use self::entity_mut::*;
 pub use self::entity_ref::*;
 pub use self::entity_ref_mut::*;
 pub use self::entity_ref_post_action::*;
+pub use self::commit_insertions::*;

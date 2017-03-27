@@ -6,19 +6,10 @@ use model::*;
 use config::*;
 use templates;
 
-const IMPORTS: [&'static str; 7] = [
-    "std::collections::{BTreeSet, btree_set}",
-    "std::collections::{BTreeMap, btree_map}",
-    "std::collections::{HashSet, hash_set}",
-    "std::collections::{HashMap, hash_map}",
+const IMPORTS: [&'static str; 3] = [
     "std::cell::{Ref, RefMut, RefCell}",
     "std::slice",
     "std::mem",
-];
-
-const IMPORTS_EXPERIMENTAL: [&'static str; 2] = [
-    "std::collections::Bound",
-    "std::collections::range::RangeArgument",
 ];
 
 #[derive(Serialize, Debug)]
@@ -95,6 +86,36 @@ struct TemplateData {
 }
 
 impl TemplateData {
+
+    fn new_from_config(config: Config) -> Self {
+        TemplateData {
+            num_components: 0,
+            component_bitfield_size: 0,
+            num_action_properties: 0,
+            action_property_bitfield_size: 0,
+            single_component_bitfield: config.single_component_bitfield,
+            combine_flag_set: config.combine_flag_set && !config.ecs_ctx_hash_collections && !config.ecs_action_hash_collections,
+            component_bookkeeping: config.component_bookkeeping && !config.unchecked_entity_delete,
+            action_component_bookkeeping: config.action_component_bookkeeping,
+            action_property_bookkeeping: config.action_property_bookkeeping,
+            unchecked_entity_delete: config.unchecked_entity_delete,
+            ecs_ctx_hash_collections: config.ecs_ctx_hash_collections,
+            ecs_action_hash_collections: config.ecs_action_hash_collections,
+            fnv_hasher: config.fnv_hasher,
+            component_bits: 0,
+            entity_bits: 0,
+            entity_mask: 0,
+            components: Vec::new(),
+            data_components: Vec::new(),
+            cell_components: Vec::new(),
+            flag_components: Vec::new(),
+            action_properties: Vec::new(),
+            data_action_properties: Vec::new(),
+            flag_action_properties: Vec::new(),
+            imports: IMPORTS.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
     fn new(model: &EcsModel, config: Config) -> Self {
 
         let num_components = model.num_components();
@@ -106,32 +127,17 @@ impl TemplateData {
         let component_bits = 64 - entity_bits;
         let entity_mask = (1 << entity_bits) - 1;
 
-        let mut data = TemplateData {
-            num_components: num_components,
-            component_bitfield_size: model.bitfield_size(),
-            num_action_properties: model.num_action_properties(),
-            action_property_bitfield_size: model.action_bitfield_size(),
-            single_component_bitfield: config.single_component_bitfield && model.bitfield_size() == 1,
-            combine_flag_set: config.combine_flag_set && !config.ecs_ctx_hash_collections && !config.ecs_action_hash_collections,
-            component_bookkeeping: config.component_bookkeeping && !config.unchecked_entity_delete,
-            action_component_bookkeeping: config.action_component_bookkeeping,
-            action_property_bookkeeping: config.action_property_bookkeeping,
-            unchecked_entity_delete: config.unchecked_entity_delete,
-            ecs_ctx_hash_collections: config.ecs_ctx_hash_collections,
-            ecs_action_hash_collections: config.ecs_action_hash_collections,
-            fnv_hasher: config.fnv_hasher,
-            component_bits: component_bits,
-            entity_bits: entity_bits,
-            entity_mask: entity_mask,
-            components: Vec::new(),
-            data_components: Vec::new(),
-            cell_components: Vec::new(),
-            flag_components: Vec::new(),
-            action_properties: Vec::new(),
-            data_action_properties: Vec::new(),
-            flag_action_properties: Vec::new(),
-            imports: IMPORTS.iter().map(|s| s.to_string()).collect(),
-        };
+        let mut data = Self::new_from_config(config);
+
+        data.num_components = num_components;
+        data.component_bitfield_size = model.bitfield_size();
+        data.num_action_properties = model.num_action_properties();
+        data.action_property_bitfield_size = model.action_bitfield_size();
+        data.entity_bits = entity_bits;
+        data.entity_mask = entity_mask;
+        data.component_bits = component_bits;
+
+        data.single_component_bitfield &= model.action_bitfield_size() == 1;
 
         for c in model.common.iter() {
             let mask = c.id << entity_bits;
@@ -217,30 +223,14 @@ impl TemplateData {
             data.imports.insert(import.clone());
         }
 
-        if config.combine_flag_set {
-            for import in IMPORTS_EXPERIMENTAL.iter() {
-                data.imports.insert(import.to_string());
-            }
-        }
-
-        if config.fnv_hasher {
-            data.imports.insert("fnv::FnvHashMap".to_string());
-            data.imports.insert("fnv::FnvHashSet".to_string());
-        }
-
         data
     }
 }
 
-pub fn full_template() -> String {
-    templates::HEADER.to_string() +
+pub fn content_template() -> String {
+    templates::HEADER_CONTENT.to_string() +
         templates::COMPONENT_SET +
         templates::ACTION_PROPERTY_SET +
-        templates::ENTITY_BTREE_SET +
-        templates::ENTITY_BTREE_MAP +
-        templates::ENTITY_HASH_SET +
-        templates::ENTITY_HASH_MAP +
-        templates::ENTITY_COLLECTIONS +
         templates::ECS_CTX +
         templates::SERIALIZABLE_ECS_CTX +
         templates::ECS_ACTION +
@@ -252,17 +242,38 @@ pub fn full_template() -> String {
         templates::ENTITY_MUT +
         templates::ENTITY_REF +
         templates::ENTITY_REF_MUT +
-        templates::ENTITY_REF_POST_ACTION
+        templates::ENTITY_REF_POST_ACTION +
+        templates::COMMIT_INSERTIONS
 }
 
-pub fn render(model: &EcsModel, config: Config) -> String {
+pub fn core_template() -> String {
+    templates::HEADER_CORE.to_string() +
+        templates::ENTITY_BTREE_SET +
+        templates::ENTITY_BTREE_MAP +
+        templates::ENTITY_HASH_SET +
+        templates::ENTITY_HASH_MAP +
+        templates::ENTITY_COLLECTIONS
+}
 
+pub fn render_core(config: Config) -> String {
+    let data = TemplateData::new_from_config(config);
+
+    let mut handlebars = Handlebars::new();
+
+    // prevent xml escaping
+    handlebars.register_escape_fn(|input| input.to_string());
+    handlebars.template_render(core_template().as_ref(), &data)
+        .expect("Failed to render template")
+
+}
+
+pub fn render_content(model: &EcsModel, config: Config) -> String {
     let data = TemplateData::new(model, config);
 
     let mut handlebars = Handlebars::new();
 
     // prevent xml escaping
     handlebars.register_escape_fn(|input| input.to_string());
-    handlebars.template_render(&full_template(), &data)
+    handlebars.template_render(content_template().as_ref(), &data)
         .expect("Failed to render template")
 }
