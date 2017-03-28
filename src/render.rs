@@ -137,7 +137,7 @@ impl TemplateData {
         data.entity_mask = entity_mask;
         data.component_bits = component_bits;
 
-        data.single_component_bitfield &= model.action_bitfield_size() == 1;
+        data.single_component_bitfield &= model.action_bitfield_size() > 1;
 
         for c in model.common.iter() {
             let mask = c.id << entity_bits;

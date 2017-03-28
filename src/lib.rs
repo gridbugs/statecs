@@ -24,7 +24,7 @@ pub fn source_changed<P: AsRef<Path>, Q: AsRef<Path>>(in_path: P, out_path: Q) -
     let out_time = if let Ok(md) = fs::metadata(out_path) {
         md.modified().expect("Failed to get output file modified time")
     } else {
-        return false;
+        return true;
     };
 
     let in_time = fs::metadata(in_path).expect("Missing input file")
