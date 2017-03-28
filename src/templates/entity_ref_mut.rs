@@ -11,4 +11,19 @@ impl<'a> EntityMut for EntityRefMut<'a> {
     fn ecs_mut(&mut self) -> &mut Self::Ecs { self.ecs }
     fn id(&self) -> EntityId { self.id }
 }
+
+impl<'a> EntityRefMut<'a> {
+    pub fn as_ref(&self) -> EntityRef {
+        EntityRef {
+            ecs: self.ecs,
+            id: self.id,
+        }
+    }
+    pub fn new(ecs: &'a mut EcsCtx, id: EntityId) -> Self {
+        EntityRefMut {
+            ecs: ecs,
+            id: id,
+        }
+    }
+}
 "#;
