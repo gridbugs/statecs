@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Write};
 
 extern crate serde;
@@ -19,7 +19,26 @@ use model::EcsModel;
 
 pub use config::Config;
 
+pub fn source_changed<P: AsRef<Path>, Q: AsRef<Path>>(in_path: P, out_path: Q) -> bool {
+
+    let out_time = if let Ok(md) = fs::metadata(out_path) {
+        md.modified().expect("Failed to get output file modified time")
+    } else {
+        return false;
+    };
+
+    let in_time = fs::metadata(in_path).expect("Missing input file")
+        .modified().expect("Failed to get input file modified time");
+
+    in_time > out_time
+}
+
 pub fn generate_content<P: AsRef<Path>, Q: AsRef<Path>>(in_path: P, out_path: Q, config: Config) {
+
+    if !source_changed(&in_path, &out_path) {
+        return;
+    }
+
     let mut file = File::open(in_path).expect("Failed to open input file");
     let mut string = String::new();
     file.read_to_string(&mut string).expect("Failed to read input file");
