@@ -613,10 +613,10 @@ pub struct ActionInsertionEntityRef<'a> {
     insertions: &'a EcsActionInsertions,
 }
 
-impl<'a> Entity<'a> for ActionInsertionEntityRef<'a> {
+impl<'a> Entity for ActionInsertionEntityRef<'a> {
     type Ecs = EcsActionInsertions;
-    fn ecs(self) -> &'a Self::Ecs { self.insertions }
-    fn id(self) -> EntityId { self.id }
+    fn ecs(&self) -> &Self::Ecs { self.insertions }
+    fn id(&self) -> EntityId { self.id }
 }
 
 pub struct ActionInsertionEntityRefMut<'a> {

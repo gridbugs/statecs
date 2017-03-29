@@ -17,9 +17,9 @@ impl<'a> EntityRef<'a> {
     }
 }
 
-impl<'a> Entity<'a> for EntityRef<'a> {
+impl<'a> Entity for EntityRef<'a> {
     type Ecs = EcsCtx;
-    fn ecs(self) -> &'a Self::Ecs { self.ecs }
-    fn id(self) -> EntityId { self.id }
+    fn ecs(&self) -> &Self::Ecs { self.ecs }
+    fn id(&self) -> EntityId { self.id }
 }
 "#;
