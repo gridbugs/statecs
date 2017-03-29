@@ -625,10 +625,13 @@ pub struct ActionInsertionEntityRefMut<'a> {
 }
 
 impl<'a> EntityMut for ActionInsertionEntityRefMut<'a> {
-    type Ecs = EcsActionInsertions;
+    type EcsMut = EcsActionInsertions;
+    fn ecs_mut(&mut self) -> &mut Self::EcsMut { self.insertions }
+}
 
+impl<'a> Entity for ActionInsertionEntityRefMut<'a> {
+    type Ecs = EcsActionInsertions;
     fn ecs(&self) -> &Self::Ecs { self.insertions }
-    fn ecs_mut(&mut self) -> &mut Self::Ecs { self.insertions }
     fn id(&self) -> EntityId { self.id }
 }
 
