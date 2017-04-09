@@ -9,6 +9,9 @@ pub trait Entity {
     fn {{name}}(&self) -> Option<&{{type}}> {
         self.ecs().get_{{name}}(self.id())
     }
+    fn ptr_{{name}}(&self) -> Option<*const {{type}}> {
+        self.ecs().get_ptr_{{name}}(self.id())
+    }
     fn contains_{{name}}(&self) -> bool {
         self.ecs().contains_{{name}}(self.id())
     }

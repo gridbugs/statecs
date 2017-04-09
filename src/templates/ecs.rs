@@ -2,6 +2,9 @@ pub const ECS: &'static str = r#"
 pub trait Ecs {
 {{#each data_components}}
     fn get_{{name}}(&self, id: EntityId) -> Option<&{{type}}>;
+    fn get_ptr_{{name}}(&self, id: EntityId) -> Option<*const {{type}}> {
+        self.get_{{name}}(id).map(|r| r as *const {{type}})
+    }
     fn contains_{{name}}(&self, id: EntityId) -> bool;
     {{#if copy}}
     fn get_copy_{{name}}(&self, id: EntityId) -> Option<{{type}}> {

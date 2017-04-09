@@ -4,6 +4,9 @@ pub trait EcsMut {
     fn insert_{{name}}(&mut self, id: EntityId, data: {{type}}) -> Option<{{type}}>;
     fn remove_{{name}}(&mut self, id: EntityId) -> Option<{{type}}>;
     fn get_mut_{{name}}(&mut self, id: EntityId) -> Option<&mut {{type}}>;
+    fn get_mut_ptr_{{name}}(&mut self, id: EntityId) -> Option<*mut {{type}}> {
+        self.get_mut_{{name}}(id).map(|r| r as *mut {{type}})
+    }
     fn swap_{{name}}(&mut self, a_id: EntityId, b_id: EntityId) {
         let maybe_a = self.remove_{{name}}(a_id);
         let maybe_b = self.remove_{{name}}(b_id);

@@ -9,6 +9,10 @@ pub trait EntityMut: Entity {
         let id = self.id();
         self.ecs_mut().get_mut_{{name}}(id)
     }
+    fn mut_ptr_{{name}}(&mut self) -> Option<*mut {{type}}> {
+        let id = self.id();
+        self.ecs_mut().get_mut_ptr_{{name}}(id)
+    }
     fn insert_{{name}}(&mut self, data: {{type}}) -> Option<{{type}}> {
         let id = self.id();
         self.ecs_mut().insert_{{name}}(id, data)
